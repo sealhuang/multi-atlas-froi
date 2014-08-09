@@ -68,29 +68,6 @@ cv_num = 5
 #ofa_dice = np.zeros((len(n_tree), len(depth), cv_num))
 #ffa_dice = np.zeros((len(n_tree), len(depth), cv_num))
 #
-## feature type
-#features = {}
-#features['coord'] = [0, 1, 2]
-#features['z_vxl'] = [3]
-#features['mni_vxl'] = [4]
-#features['fbeta_vxl'] = [5]
-#features['obeta_vxl'] = [6]
-#features['prob'] = [7, 8]
-#features['z_type1'] = [9, 10, 11]
-#features['mni_type1'] = [12, 13, 14]
-#features['fbeta_type1'] = [15, 16, 17]
-#features['obeta_type1'] = [18, 19, 20]
-#features['z_type2'] = range(21, 114, 4)
-#features['mni_type2'] = range(22, 115, 4)
-#features['fbeta_type2'] = range(23, 116, 4)
-#features['obeta_type2'] = range(24, 117, 4)
-#features['z_type3'] = range(117, 894, 4)
-#features['mni_type3'] = range(118, 895, 4)
-#features['fbeta_type3'] = range(119, 896, 4)
-#features['obeta_type3'] = range(120, 897, 4)
-#
-#feature_idx = features['coord'] + features['z_type3']
-#
 ## split all subjects into 5 folds
 #subj_group = arlib.split_subject(sessid, cv_num)
 #for i in range(cv_num):
@@ -156,7 +133,6 @@ cv_num = 5
 #         ffa_dice=ffa_dice, ofa_dice=ofa_dice)
 
 #-- Cross-validation to evaluate performance of model
-cv_score = np.zeros((cv_num))
 ofa_dice = np.zeros((cv_num))
 ffa_dice = np.zeros((cv_num))
 
@@ -184,61 +160,74 @@ for i in range(cv_num):
 
     # Forest training with single subject's data
     forest_list = []
+    spatial_ptn = None
     for subj in train_sessid:
         train_data = arlib.get_list_data([subj], cv_dir)
         train_x = train_data[..., :-1]
         train_y = train_data[..., -1]
+        if not isinstance(spatial_ptn, np.array):
+            spatial_ptn = np.zeros((train_data.shape[0], len(train_sessid)))
+            count = 0
+        spatial_ptn[..., count] = train_x[..., 0]
+        count += 1
         clf = RandomForestClassifier(n_estimators=50, max_depth=30,
                                      criterion='gini', n_jobs=20)
         clf.fit(train_x, train_y)
         forest_list.append(clf)
 
     # Model testing
+    ffa_dice_tmp = []
+    ofa_dice_tmp = []
+
     for subj in test_sessid:
+        print 'Test data - subject %s'%(subj)
         test_data = arlib.get_list_data([subj], cv_dir)
         test_x = test_data[..., :-1]
         test_y = test_data[..., -1]
         # TODO: define similarity index
-        similarity = XXX
+        similarity = []
+        for j in range(len(train_sessid)):
+            similarity.append(
+                    np.corrcoef(test_x[..., 0], spatial_ptn[..., j])[0, 1])
         pred_prob = None
         count = 0
         for clf_idx in range(len(train_sessid)):
             clf = forest_list[clf_idx]
             prob = clf.predict_proba(test_x) * similarity[clf_idx]
-            if not instance(pred_prob, np.array):
+            if not isinstance(pred_prob, np.array):
                 pred_prob = prob
             else:
                 pred_prob += prob
             count += 1
         pred_prob = pred_prob / count
-        pred_y = np.argmax(pred_prob, axis=0)
+        pred_y = np.argmax(pred_prob, axis=1)
         pred_y[pred_y==2] = 3
 
-        # FIXME
+        for label_idx in [1, 3]:
+            P = pred_y == label_idx
+            T = test_y == label_idx
+            dice_val = mymath.dice_coef(T, P)
+            print 'Dice for label %s: %f'%(label_idx, dice_val)
+            if label_idx == 3:
+                ffa_dice_tmp.append(dice_val)
+            else:
+                ofa_dice_tmp.append(dice_val)
+        print '-----------------------'
+
         #-- save predicted label as nifti files
         fsl_dir = os.getenv('FSL_DIR')
         img = nib.load(os.path.join(fsl_dir, 'data', 'standard',
                                     'MNI152_T1_2mm_brain.nii.gz'))
+        # save predicted label
         header = img.get_header()
+        coords = test_x[testy_x, 1:4]
+        pred_data = arlib.write2array(coords, pred_y)
+        out_file = os.path.join(pred_dir, subj + '_pred.nii.gz')
+        mybase.save2nifti(pred_data, header, out_file)
 
-        # load sample number of each subject
-        sample_num_file = os.path.join(cv_dir, 'sample_num.txt')
-        subj_sample_num = arlib.get_subj_sample_num(sample_num_file)
-        start_num = 0
-        for subj_idx in range(len(test_sessid)):
-            sample_num = subj_sample_num[subj_idx]
-            end_num = start_num + sample_num
-            coords = test_x[start_num:end_num, 0:3]
+    ffa_dice[i] = np.mean(ffa_dice_tmp)
+    ofa_dice[i] = np.mean(ofa_dice_tmp)
 
-            # save predicted label
-            voxel_val = pred_y[start_num:end_num]
-            pred_data = arlib.write2array(coords, voxel_val)
-            out_file = os.path.join(pred_dir,
-                                    test_sessid[subj_idx]+'_pred.nii.gz')
-            mybase.save2nifti(pred_data, header, out_file)
-            start_num += sample_num
-
-print 'Mean CV score is %s'%(cv_score.mean())
 print 'Mean FFA Dice is %s'%(ffa_dice.mean())
 print 'Mean OFA Dice is %s'%(ofa_dice.mean())
 
