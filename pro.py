@@ -36,7 +36,7 @@ mask_coords = arlib.get_mask_coord(mask_data, data_dir)
 pool = mps.Pool(20)
 result = pool.map(functools.partial(arlib.ext_subj_feature,
                                     mask_coord=mask_coords,
-                                    data_dir=cv_dir, mask_out=False),
+                                    out_dir=data_dir, mask_out=False),
                   sessid)
 
 ##-- Cross-validation to evaluate performance of model
