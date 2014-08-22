@@ -165,7 +165,7 @@ for i in range(cv_num):
 #        train_data = arlib.get_list_data([subj], cv_dir)
 #        train_x = train_data[..., :-1]
 #        train_y = train_data[..., -1]
-#        if not isinstance(spatial_ptn, np.array):
+#        if not isinstance(spatial_ptn, np.ndarray):
 #            spatial_ptn = np.zeros((train_data.shape[0], len(train_sessid)))
 #            count = 0
 #        spatial_ptn[..., count] = train_x[..., 0]
@@ -194,7 +194,7 @@ for i in range(cv_num):
 #        for clf_idx in range(len(train_sessid)):
 #            clf = forest_list[clf_idx]
 #            prob = clf.predict_proba(test_x) * similarity[clf_idx]
-#            if not isinstance(pred_prob, np.array):
+#            if not isinstance(pred_prob, np.ndarray):
 #                pred_prob = prob
 #            else:
 #                pred_prob += prob
