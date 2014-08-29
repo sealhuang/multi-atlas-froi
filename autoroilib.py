@@ -8,6 +8,7 @@ import re
 from scipy.spatial.distance import euclidean
 import time
 import scipy.ndimage as ndimage
+from sklearn.metrics import normalized_mutual_info_score
 
 from mypy import base as mybase
 
@@ -345,4 +346,11 @@ def smooth_data(data, sigma):
     else:
         data = ndimage.gaussian_filter(data, sigma)
     return data
+
+def normalized_mutual_info(vtr_1, vtr_2, threshold):
+    vtr_1[vtr_1<threshold] = 0
+    vtr_1[vtr_1>0] = 1
+    vtr_2[vtr_2<threshold] = 0
+    vtr_2[vtr_2>0] = 1
+    return normalized_mutual_info_score(vtr_1, vtr_2)
 
