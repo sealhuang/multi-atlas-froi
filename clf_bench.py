@@ -133,7 +133,7 @@ arlib.save_subject_group(subj_group, data_dir)
 #         ffa_dice=ffa_dice, ofa_dice=ofa_dice)
 
 #-- Cross-validation to evaluate performance of model
-selected_num = [1, 5, 10, 15, 20, 25, 30, 35, 40]
+selected_num = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]
 ofa_dice = {}
 ffa_dice = {}
 for num in selected_num:
@@ -172,7 +172,7 @@ for i in range(cv_num):
         z_vtr = train_data[..., 0].copy()
         z_vtr[z_vtr<2.3] = 0
         smp_mask = z_vtr > 0
-        train_x = train_data[smp_mask, 1:-1]
+        train_x = train_data[smp_mask, 1:4]
         train_y = train_data[smp_mask, -1]
         if not isinstance(spatial_ptn, np.ndarray):
             spatial_ptn = np.zeros((train_data.shape[0], len(train_sessid)))
@@ -200,7 +200,7 @@ for i in range(cv_num):
         z_vtr = test_data[..., 0].copy()
         z_vtr[z_vtr < 2.3] = 0
         smp_mask = z_vtr > 0
-        test_x = test_data[smp_mask, 1:-1]
+        test_x = test_data[smp_mask, 1:4]
         test_y = test_data[smp_mask, -1]
         # TODO: define similarity index
         similarity = []
@@ -253,9 +253,9 @@ for i in range(cv_num):
                 dice_val = mymath.dice_coef(T, P)
                 #print 'Dice for label %s: %f'%(label_idx, dice_val)
                 if label_idx == 3:
-                    ffa_dice_tmp[sel_num].append(dice_val)
+                    ffa_dice_tmp[num].append(dice_val)
                 else:
-                    ofa_dice_tmp[sel_num].append(dice_val)
+                    ofa_dice_tmp[num].append(dice_val)
 
         ##-- save predicted label as nifti files
         #fsl_dir = os.getenv('FSL_DIR')
