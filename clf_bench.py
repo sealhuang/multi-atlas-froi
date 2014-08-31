@@ -172,7 +172,7 @@ for i in range(cv_num):
         z_vtr = train_data[..., 0].copy()
         z_vtr[z_vtr<2.3] = 0
         smp_mask = z_vtr > 0
-        train_x = train_data[smp_mask, 1:4]
+        train_x = train_data[smp_mask, 0:4]
         train_y = train_data[smp_mask, -1]
         if not isinstance(spatial_ptn, np.ndarray):
             spatial_ptn = np.zeros((train_data.shape[0], len(train_sessid)))
@@ -200,7 +200,7 @@ for i in range(cv_num):
         z_vtr = test_data[..., 0].copy()
         z_vtr[z_vtr < 2.3] = 0
         smp_mask = z_vtr > 0
-        test_x = test_data[smp_mask, 1:4]
+        test_x = test_data[smp_mask, 0:4]
         test_y = test_data[smp_mask, -1]
         # TODO: define similarity index
         similarity = []

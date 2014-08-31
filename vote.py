@@ -66,11 +66,10 @@ for i in range(len(sessid)):
     sorted_sim_idx = np.argsort(similarity)[::-1]
 
     cls_list = [0 ,1 ,3]
-
+    temp_ffa_dice = []
+    temp_ofa_dice = []
     for num in selected_num:
         print 'selected atlas number %s'%(num)
-        temp_ffa_dice = []
-        temp_ofa_dice = []
         selected_atlas = sorted_sim_idx[0:num]
         pred_prob = np.zeros((91, 109, 91, 3))
         for idx in selected_atlas:
