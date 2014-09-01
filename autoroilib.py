@@ -8,7 +8,6 @@ import re
 from scipy.spatial.distance import euclidean
 import time
 import scipy.ndimage as ndimage
-from sklearn.metrics import normalized_mutual_info_score
 
 from mypy import base as mybase
 
@@ -23,8 +22,8 @@ def ext_feature(sid, mask_coord, mask_out=True):
     """
     #-- data preparation
     # zstat nad label file
-    db1_dir = r'/nfs/t2/atlas/database'
-    subject_dir = os.path.join(db1_dir, sid, 'face-object')
+    db_dir = r'/nfs/t2/atlas/database'
+    subject_dir = os.path.join(db_dir, sid, 'face-object')
     if not os.path.exists(subject_dir):
         print 'Subject ' + sid + 'does not exist in database.'
         return
@@ -39,21 +38,6 @@ def ext_feature(sid, mask_coord, mask_out=True):
     sample_data = []
     sample_label = [] 
     sample_num = len(mask_coord)
-    
-    # get neighbor offset
-    neighbor_offset = get_neighbor_offset(1)
-    
-    # seed_offset_vtr
-    offset_len = 4
-    seed_offset_vtr_x = [[i, 0, 0] for i in
-                         range(-offset_len, offset_len+1) if i]
-    seed_offset_vtr_y = [[0, i, 0] for i in
-                         range(-offset_len, offset_len+1) if i]
-    seed_offset_vtr_z = [[0, 0, i] for i in
-                         range(-offset_len, offset_len+1) if i]
-    seed_offset_vtr = np.array(seed_offset_vtr_x + \
-                               seed_offset_vtr_y + \
-                               seed_offset_vtr_z)
     
     for idx in range(sample_num):
         feature_buff = []
@@ -81,22 +65,6 @@ def ext_feature(sid, mask_coord, mask_out=True):
             sample_label.append('coord_z')
         feature_buff.append(coord[2])
         
-        # Context-Aware features
-        # Diffence of offset cuboid means
-        for i in range(len(seed_offset_vtr)):
-            for j in range(i+1, len(seed_offset_vtr)):
-                if offset_dist(i, j) < 3:
-                    continue
-                offset_seed_1 = coord + seed_offset_vtr[i]
-                offset_seed_2 = coord + seed_offset_vtr[j]
-                if not idx:
-                    sample_label.append('diff_z_offset_' + \
-                                        str(i) + '_offset_' + str(j))
-                feature_buff.append(get_mean(zstat_data,
-                                        offset_seed_1 + neighbor_offset) - \
-                                    get_mean(zstat_data,
-                                        offset_seed_2 + neighbor_offset))
-       
         # get voxel label
         label = label_data[tuple(coord)]
         if not idx:
@@ -146,11 +114,10 @@ def get_mean(data, coords):
 
 def make_prior(subj_list, output_dir):
     """
-    Create label probability map and the mask based on the sebject ID.
+    Create a label mask derived from a group of subjects.
 
     """
-    print 'Create a whole-fROI mask and several probabilistic map for' + \
-          ' each fROI.'
+    print 'Create a whole-fROI mask ...'
     db_dir = r'/nfs/t2/atlas/database'
     subj_num = len(subj_list)
     for i in range(subj_num):
@@ -160,29 +127,19 @@ def make_prior(subj_list, output_dir):
         label_data = nib.load(label_file).get_data()
         img_header = nib.load(label_file).get_header()
         if not i:
-            data_size = label_data.shape
-            prob_data = np.zeros((data_size[0],
-                                  data_size[1],
-                                  data_size[2],
-                                  2))
+            mask_data = np.zeros(label_data.shape)
         temp = label_data.copy()
-        temp[temp!=1] = 0
-        prob_data[..., 0] += temp
-        temp = label_data.copy()
-        temp[temp!=3] = 0
-        temp[temp!=0] = 1
-        prob_data[..., 1] += temp
-    # calculate probability map
-    prob_data = prob_data / subj_num
-    mask_data = prob_data.sum(axis=3)
+        temp[temp==1] = 100
+        temp[temp==3] = 100
+        temp[temp!=100] = 0
+        temp[temp>0] = 1
+        mask_data += temp
     mask_data[mask_data!=0] = 1
     # save to file
-    prob_file = os.path.join(output_dir, 'prob.nii.gz')
-    mybase.save2nifti(prob_data, img_header, prob_file)
     mask_file = os.path.join(output_dir, 'mask.nii.gz')
     mybase.save2nifti(mask_data, img_header, mask_file)
     # return data
-    return prob_data, mask_data
+    return mask_data
 
 def get_mask_coord(mask_data, output_dir):
     """
@@ -346,11 +303,4 @@ def smooth_data(data, sigma):
     else:
         data = ndimage.gaussian_filter(data, sigma)
     return data
-
-def normalized_mutual_info(vtr_1, vtr_2, threshold):
-    vtr_1[vtr_1<threshold] = 0
-    vtr_1[vtr_1>0] = 1
-    vtr_2[vtr_2<threshold] = 0
-    vtr_2[vtr_2>0] = 1
-    return normalized_mutual_info_score(vtr_1, vtr_2)
 
