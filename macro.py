@@ -50,7 +50,7 @@ def train_model(sessid, data_dir, n_tree=30, d_tree=20):
         z_vtr[z_vtr>0] = 1
         # mask out voxels which are not activated significantly
         smp_mask = z_vtr > 0
-        train_x = train_data[smp_mask, 1:4]
+        train_x = train_data[smp_mask, 0:4]
         train_y = train_data[smp_mask, -1]
         # save activation pattern
         if not isinstance(spatial_ptn, np.ndarray):
@@ -66,7 +66,7 @@ def train_model(sessid, data_dir, n_tree=30, d_tree=20):
         classes_list.append(clf.classes_)
     return forest_list, classes_list, spatial_ptn
 
-def leave_one_out_test(sessid, atlas_num, data_dir, class_list,
+def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                        forest_list, classes_list, spatial_ptn,
                        save_nifti=False, sorted=True):
     """
@@ -75,15 +75,15 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_list,
     """
     # initial output dice value
     dice = {}
-    for class_label in class_list:
-        dice[class_label] = []
+    for idx in class_label:
+        dice[idx] = []
 
     for i in range(len(sessid)):
         print 'Test subject %s'%(sessid[i])
         test_data = arlib.get_subj_data(sessid[i], data_dir)
         # mask out voxels which are not activated significantly
         smp_mask = test_data[..., 0] >= 2.3
-        test_x = test_data[smp_mask, 1:4]
+        test_x = test_data[smp_mask, 0:4]
         test_y = test_data[smp_mask, -1]
         
         # define similarity index
@@ -102,8 +102,8 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_list,
 
         # label the activation voxels with atlas forests (AFs)
         tmp_dice = {}
-        for class_label in class_list:
-            tmp[class_label] = []
+        for idx in class_label:
+            tmp_dice[idx] = []
 
         for num in atlas_num:
             print 'atlas number %s'%(num)
@@ -116,15 +116,15 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_list,
             for idx in selected_atlas:
                 clf = forest_list[atlas_idx[idx]]
                 prob = clf.predict_proba(test_x)
-                std_prob = np.zeros((prob.shape[0], len(class_list)))
+                std_prob = np.zeros((prob.shape[0], len(class_label)+1))
                 # TODO: construct a std prob table
                 for cls_idx in range(prob.shape[1]):
                     if classes_list[atlas_idx[idx]][cls_idx] == 0:
                         std_prob[..., 0] = prob[..., cls_idx]
-                    elif classes_list[atlas_idx[idx]][cls_idx] == 1:
-                        std_prob[..., 1] = prob[..., cls_idx]
-                    elif classes_list[atlas_idx[idx]][cls_idx] == 3:
-                        std_prob[..., 2] = prob[..., cls_idx]
+                    else:
+                        tmp_idx = class_label.index(
+                                classes_list[atlas_idx[idx]][cls_idx])
+                        std_prob[..., tmp_idx+1] = prob[..., cls_idx]
                 new_prob = np.zeros(std_prob.shape)
                 new_prob[range(new_prob.shape[0]),
                         np.argmax(std_prob, axis=1)] = 1
@@ -135,59 +135,52 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_list,
                 else:
                     pred_prob += new_prob
             #print pred_prob.shape
-            pred_y = np.argmax(pred_prob, axis=1)
-            pred_y[pred_y==2] = 3
+            tmp_pred_y = np.argmax(pred_prob, axis=1)
+            pred_y = np.zeros(tmp_pred_y.shape)
+            for k in range(1, pred_prob.shape[1]):
+                pred_y[tmp_pred_y==k] = class_label[k-1]
 
-            for label_idx in [1, 3]:
+            for label_idx in class_label:
                 P = pred_y == label_idx
                 T = test_y == label_idx
                 dice_val = mymath.dice_coef(T, P)
                 print 'Dice for label %s: %f'%(label_idx, dice_val)
-                if label_idx == 3:
-                    temp_ffa_dice.append(dice_val)
-                else:
-                    temp_ofa_dice.append(dice_val)
+                tmp_dice[label_idx].append(dice_val)
 
-        ##-- save predicted label as nifti files
-        ## predicted nifti directory
-        #pred_dir = os.path.join(data_dir, 'predicted_files')
-        #if not os.path.exists(pred_dir):
-        #    os.system('mkdir ' + pred_dir)
-        #fsl_dir = os.getenv('FSL_DIR')
-        #img = nib.load(os.path.join(fsl_dir, 'data', 'standard',
-        #                            'MNI152_T1_2mm_brain.nii.gz'))
-        ## save predicted label
-        #header = img.get_header()
-        #coords = test_x[test_x, 1:4]
-        #pred_data = arlib.write2array(coords, pred_y)
-        #out_file = os.path.join(pred_dir, subj + '_pred.nii.gz')
-        #mybase.save2nifti(pred_data, header, out_file)
+            # save predicted label as a nifti file
+            if save_nifti:
+                # predicted nifti directory
+                pred_dir = os.path.join(data_dir, str(num) + '_atlas_pred')
+                if not os.path.exists(pred_dir):
+                    os.system('mkdir ' + pred_dir)
+                fsl_dir = os.getenv('FSL_DIR')
+                img = nib.load(os.path.join(fsl_dir, 'data', 'standard',
+                                            'MNI152_T1_2mm_brain.nii.gz'))
+                # save predicted label
+                header = img.get_header()
+                coords = test_x[smp_mask, 1:4]
+                pred_data = arlib.write2array(coords, pred_y)
+                out_file = os.path.join(pred_dir, subj + '_pred.nii.gz')
+                mybase.save2nifti(pred_data, header, out_file)
 
-        ffa_dice.append(temp_ffa_dice)
-        ofa_dice.append(temp_ofa_dice)
+        for idx in class_label:
+            dice[idx].append(tmp_dice[idx])
 
-    print 'Mean Dice - FFA:'
-    print np.array(ffa_dice).mean(axis=0)
-    print 'Mean Dice - OFA:'
-    print np.array(ofa_dice).mean(axis=0)
+    for idx in class_label:
+        print 'Mean Dice for label %s: %s'%(idx, np.mean(dice[idx], axis=0))
+    return dice
 
-out_file = 'ffa_output.txt'
-f = open(out_file, 'w')
-str_line = [str(item) for item in selected_num]
-str_line = ','.join(str_line)
-f.write(str_line + '\n')
-for line in ffa_dice:
-    tmp_line = [str(item) for item in line]
-    tmp_line = ','.join(tmp_line)
-    f.write(tmp_line + '\n')
+def save_dice(dice_dict, out_dir):
+    """
+    Save Dice dict to a file.
 
-out_file = 'ofa_output.txt'
-f = open(out_file, 'w')
-str_line = [str(item) for item in selected_num]
-str_line = ','.join(str_line)
-f.write(str_line + '\n')
-for line in ofa_dice:
-    tmp_line = [str(item) for item in line]
-    tmp_line = ','.join(tmp_line)
-    f.write(tmp_line + '\n')
+    """
+    for label in dice_dict:
+        out_file_name = 'label_' + str(label) + '.txt'
+        f = open(os.path.join(out_dir, out_file_name), 'w')
+        data = dice_dict[label]
+        for line in data:
+            tmp_line = [str(item) for item in line]
+            tmp_line = ','.join(tmp_line)
+            f.write(tmp_line + '\n')
 
