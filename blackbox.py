@@ -9,10 +9,10 @@ import macro
 
 base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
 doc_dir = os.path.join(base_dir, 'doc')
-data_dir = os.path.join(base_dir, 'multi-atlas', 'data', 'l_ffa_ofa')
+data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ffa_ofa')
 
-class_label = [2, 4]
-atlas_num = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]
+class_label = [1, 3]
+atlas_num = [1, 5] + range(10, 201, 10)
 #atlas_num = [1, 5]
 
 # read all subjects' SID
