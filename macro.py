@@ -4,6 +4,7 @@
 import os
 import numpy as np
 import nibabel as nib
+import time
 
 # modules used for sample extraction
 import multiprocessing as mps
@@ -158,9 +159,9 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                                             'MNI152_T1_2mm_brain.nii.gz'))
                 # save predicted label
                 header = img.get_header()
-                coords = test_x[smp_mask, 1:4]
+                coords = test_x[..., 1:4]
                 pred_data = arlib.write2array(coords, pred_y)
-                out_file = os.path.join(pred_dir, subj + '_pred.nii.gz')
+                out_file = os.path.join(pred_dir, sessid[i] + '_pred.nii.gz')
                 mybase.save2nifti(pred_data, header, out_file)
 
         for idx in class_label:
@@ -177,6 +178,8 @@ def save_dice(dice_dict, out_dir):
     """
     for label in dice_dict:
         out_file_name = 'label_' + str(label) + '.txt'
+        if os.path.exists(os.path.join(out_dir, out_file_name)):
+            out_file_name += '.' + str(time.time())
         f = open(os.path.join(out_dir, out_file_name), 'w')
         data = dice_dict[label]
         for line in data:

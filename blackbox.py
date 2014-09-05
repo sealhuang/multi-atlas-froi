@@ -20,14 +20,25 @@ sessid_file = os.path.join(doc_dir, 'sessid')
 sessid = open(sessid_file).readlines()
 sessid = [line.strip() for line in sessid]
 
-# extract samples
-macro.extract_sample(sessid, class_label, data_dir)
+## extract samples
+#macro.extract_sample(sessid, class_label, data_dir)
 
-# model training and testing
-forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
-dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-                                forest_list, classes_list, spatial_ptn)
+## model training and testing
+#forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
+#dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+#                                forest_list, classes_list, spatial_ptn)
+#
+## save dice to a file
+#macro.save_dice(dice, data_dir)
 
-# save dice to a file
-macro.save_dice(dice, data_dir)
+for i in range(10):
+    # model training and testing
+    forest_list, classes_list, spatial_ptn = macro.train_model(sessid,
+                                                               data_dir)
+    dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+                                    forest_list, classes_list, spatial_ptn,
+                                    sorted=False)
+
+    # save dice to a file
+    macro.save_dice(dice, data_dir)
 
