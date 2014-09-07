@@ -71,7 +71,7 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                        forest_list, classes_list, spatial_ptn,
                        save_nifti=False, sorted=True):
     """
-    Test classifier performance with leave-one-out scheme.
+    Evaluate classifier performance with leave-one-out scheme.
 
     """
     # initial output dice value
@@ -161,6 +161,7 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                 header = img.get_header()
                 coords = test_x[..., 1:4]
                 pred_data = arlib.write2array(coords, pred_y)
+                pred_data = np.around(pred_data)
                 out_file = os.path.join(pred_dir, sessid[i] + '_pred.nii.gz')
                 mybase.save2nifti(pred_data, header, out_file)
 
