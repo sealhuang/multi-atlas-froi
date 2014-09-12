@@ -82,50 +82,50 @@ sessid = [line.strip() for line in sessid]
 #    mybase.save2nifti(ind_atlas, header, out_file)
 
 #-- compute rsfc
-#atlas_dir = os.path.join(data_dir, 'roi_mask')
-#atlas_dir = os.path.join(gcss_dir, 'roi_mask')
-atlas_dir = os.path.join(ma_dir, 'predicted_files', 'roi_mask')
+atlas_dir = os.path.join(data_dir, 'peak_mask_1')
+#atlas_dir = os.path.join(gcss_dir, 'peak_mask')
+#atlas_dir = os.path.join(ma_dir, 'predicted_files', 'peak_mask')
 rsfc_dir = os.path.join(atlas_dir, 'rsfc')
 sessid_file = os.path.join(rsfc_dir, 'sessid')
 
-# extract time courses
-for i in range(len(sessid)):
-    f = open(sessid_file, 'w')
-    f.write(sessid[i])
-    f.close()
-    atlas_file = os.path.join(atlas_dir, sessid[i] + '_atlas.nii.gz')
-    cmd_str = ['extract-roi-tc', '-method', 'roi', '-mask', atlas_file,
-               '-sf', sessid_file, '-outDir', rsfc_dir]
-    os.system(' '.join(cmd_str))
+## extract time courses
+#for i in range(len(sessid)):
+#    f = open(sessid_file, 'w')
+#    f.write(sessid[i])
+#    f.close()
+#    atlas_file = os.path.join(atlas_dir, sessid[i] + '_atlas.nii.gz')
+#    cmd_str = ['extract-roi-tc', '-method', 'roi', '-mask', atlas_file,
+#               '-sf', sessid_file, '-outDir', rsfc_dir]
+#    os.system(' '.join(cmd_str))
 
-## compute rsfc
-#roi = ['rOFA', 'rFFA']
-#
-## load roi stats file
-#roi_stats_file = os.path.join(atlas_dir, 'roi_stat.csv')
-#roi_stats = open(roi_stats_file).readlines()
-#roi_stats = [line.strip().split(',') for line in roi_stats]
-#header = roi_stats.pop(0)
-#roi_idx = {}
-#for i in range(1, 5):
-#    roi_idx[header[i]] = i
-#
-#for i in range(len(roi_stats)):
-#    flag = roi_stats[i]
-#    subj = flag[0]
-#    roi_flag_1 = int(flag[roi_idx[roi[0]]])
-#    roi_flag_2 = int(flag[roi_idx[roi[1]]])
-#    if roi_flag_1 and roi_flag_2:
-#        flag = flag[1:5]
-#        flag = [int(item) for item in flag]
-#        new_idx = []
-#        for j in range(len(flag)):
-#            new_idx.append(sum(flag[0:(j+1)]))
-#        # load ts data
-#        ts_file = os.path.join(rsfc_dir, subj, 'seed_ts',
-#                               subj + '_atlas_ts.txt')
-#        ts_data = np.loadtxt(ts_file)
-#        r = np.corrcoef(ts_data[..., new_idx[roi_idx[roi[0]]-1]],
-#                        ts_data[..., new_idx[roi_idx[roi[1]]-1]])[0, 1]
-#        print subj, r
-#
+# compute rsfc
+roi = ['rOFA', 'rFFA']
+
+# load roi stats file
+roi_stats_file = os.path.join(atlas_dir, 'roi_stat.csv')
+roi_stats = open(roi_stats_file).readlines()
+roi_stats = [line.strip().split(',') for line in roi_stats]
+header = roi_stats.pop(0)
+roi_idx = {}
+for i in range(1, 5):
+    roi_idx[header[i]] = i
+
+for i in range(len(roi_stats)):
+    flag = roi_stats[i]
+    subj = flag[0]
+    roi_flag_1 = int(flag[roi_idx[roi[0]]])
+    roi_flag_2 = int(flag[roi_idx[roi[1]]])
+    if roi_flag_1 and roi_flag_2:
+        flag = flag[1:5]
+        flag = [int(item) for item in flag]
+        new_idx = []
+        for j in range(len(flag)):
+            new_idx.append(sum(flag[0:(j+1)]))
+        # load ts data
+        ts_file = os.path.join(rsfc_dir, subj, 'seed_ts',
+                               subj + '_atlas_ts.txt')
+        ts_data = np.loadtxt(ts_file)
+        r = np.corrcoef(ts_data[..., new_idx[roi_idx[roi[0]]-1]],
+                        ts_data[..., new_idx[roi_idx[roi[1]]-1]])[0, 1]
+        print subj, r
+

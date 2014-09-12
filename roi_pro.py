@@ -20,7 +20,9 @@ sessid = open(sessid_file).readlines()
 sessid = [line.strip() for line in sessid]
 
 # load label and zstat file
-label_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
+#label_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
+#label_file = os.path.join(gcss_dir, 'merged_pred.nii.gz')
+label_file = os.path.join(ma_dir, 'merged_pred.nii.gz')
 label_data = nib.load(label_file).get_data()
 header = nib.load(label_file).get_header()
 
@@ -29,7 +31,9 @@ zstat_data = nib.load(zstat_file).get_data()
 
 roi_list = [1, 2, 3, 4]
 
-out_dir = os.path.join(data_dir, 'peak_mask')
+#out_dir = os.path.join(data_dir, 'peak_mask_1')
+#out_dir = os.path.join(gcss_dir, 'peak_mask_1')
+out_dir = os.path.join(ma_dir, 'peak_mask_1')
 
 for i in range(len(sessid)):
     ind_label = label_data[..., i].copy()
@@ -42,11 +46,12 @@ for i in range(len(sessid)):
         tmp[tmp==roi] = 1
         if not tmp.sum():
             continue
+        tmp_peak = np.zeros(tmp.shape)
         tmp_zstat = tmp * ind_zstat
         peak_coord = np.unravel_index(tmp_zstat.argmax(), tmp_zstat.shape)
-        tmp_peak = imtool.cube_roi(peak_label, peak_coord[0],
+        tmp_peak = imtool.cube_roi(tmp_peak, peak_coord[0],
                                    peak_coord[1], peak_coord[2],
-                                   3, roi)
+                                   1, roi)
         peak_label += tmp_peak * tmp
     out_file = os.path.join(out_dir, sessid[i] + '_atlas.nii.gz')
     mybase.save2nifti(peak_label, header, out_file)

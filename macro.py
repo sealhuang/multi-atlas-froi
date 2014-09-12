@@ -181,6 +181,7 @@ def save_dice(dice_dict, out_dir):
         out_file_name = 'label_' + str(label) + '.txt'
         if os.path.exists(os.path.join(out_dir, out_file_name)):
             out_file_name += '.' + str(time.time())
+        print out_file_name
         f = open(os.path.join(out_dir, out_file_name), 'w')
         data = dice_dict[label]
         for line in data:
