@@ -69,7 +69,7 @@ def train_model(sessid, data_dir, n_tree=30, d_tree=20):
 
 def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                        forest_list, classes_list, spatial_ptn,
-                       save_nifti=False, sorted=True):
+                       save_nifti=False, sorted=True, single_atlas=False):
     """
     Evaluate classifier performance with leave-one-out scheme.
 
@@ -109,7 +109,10 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
         for num in atlas_num:
             print 'atlas number %s'%(num)
             if sorted:
-                selected_atlas = sorted_sim_idx[0:num]
+                if not single_atlas:
+                    selected_atlas = sorted_sim_idx[0:num]
+                else:
+                    selected_atlas = sorted_sim_idx[(num-1):num]
             else:
                 selected_atlas = np.random.choice(len(sorted_sim_idx),
                                                   num, replace=False)
@@ -181,7 +184,7 @@ def save_dice(dice_dict, out_dir):
         out_file_name = 'label_' + str(label) + '.txt'
         if os.path.exists(os.path.join(out_dir, out_file_name)):
             out_file_name += '.' + str(time.time())
-        print out_file_name
+        #print out_file_name
         f = open(os.path.join(out_dir, out_file_name), 'w')
         data = dice_dict[label]
         for line in data:
