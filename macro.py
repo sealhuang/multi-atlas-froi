@@ -172,7 +172,7 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
             dice[idx].append(tmp_dice[idx])
 
     for idx in class_label:
-        print 'Mean Dice for label %s: %s'%(idx, np.mean(dice[idx], axis=0))
+        print 'Mean Dice for label %s: %s'%(idx, np.mean(dice[idx], axis=0)[0])
     return dice
 
 def save_dice(dice_dict, out_dir):
