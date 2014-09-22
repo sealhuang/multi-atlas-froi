@@ -175,6 +175,84 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
         print 'Mean Dice for label %s: %s'%(idx, np.mean(dice[idx], axis=0)[0])
     return dice
 
+def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
+            forest_list, classes_list, spatial_ptn,
+            save_nifti=True, sorted=True, single_atlas=False):
+    """
+    Predict ROI label for unseen query image.
+
+    """
+    # mask out voxels which are not activated significantly
+    x_mtx = np.array(x_mtx)
+    z_vtr = x_mtx[..., 0].copy()
+    z_vtr[z_vtr<2.3] = 0
+    z_vtr[z_vtr>0] = 1
+    smp_mask = z_vtr > 0
+    test_x = x_mtx[smp_mask, 0:4]
+        
+    # define similarity index
+    similarity = []
+    for i in range(len(forest_list)):
+        r = normalized_mutual_info_score(spatial_ptn[..., i], z_vtr)
+        similarity.append(r)
+
+    # sort the similarity
+    sorted_sim_idx = np.argsort(similarity)[::-1]
+
+    # label the activation voxels with atlas forests (AFs)
+    for num in atlas_num:
+        print 'atlas number %s'%(num)
+        if sorted:
+            if not single_atlas:
+                selected_atlas = sorted_sim_idx[0:num]
+            else:
+                selected_atlas = sorted_sim_idx[(num-1):num]
+        else:
+            selected_atlas = np.random.choice(len(sorted_sim_idx),
+                                              num, replace=False)
+        pred_prob = None
+        for idx in selected_atlas:
+            clf = forest_list[idx]
+            prob = clf.predict_proba(test_x)
+            std_prob = np.zeros((prob.shape[0], len(class_label)+1))
+            # TODO: construct a std prob table
+            for cls_idx in range(prob.shape[1]):
+                if classes_list[idx][cls_idx] == 0:
+                    std_prob[..., 0] = prob[..., cls_idx]
+                else:
+                    tmp_idx = class_label.index(classes_list[idx][cls_idx])
+                    std_prob[..., tmp_idx+1] = prob[..., cls_idx]
+            new_prob = np.zeros(std_prob.shape)
+            new_prob[range(new_prob.shape[0]),
+                     np.argmax(std_prob, axis=1)] = 1
+            # optional: modulate prediction probability with similarity
+            #new_prob = new_prob * similarity[clf_idx]
+            if not isinstance(pred_prob, np.ndarray):
+                pred_prob = new_prob
+            else:
+                pred_prob += new_prob
+        #print pred_prob.shape
+        tmp_pred_y = np.argmax(pred_prob, axis=1)
+        pred_y = np.zeros(tmp_pred_y.shape)
+        for k in range(1, pred_prob.shape[1]):
+            pred_y[tmp_pred_y==k] = class_label[k-1]
+
+        # save predicted label as a nifti file
+        if save_nifti:
+            # predicted nifti directory
+            if not os.path.exists(out_dir):
+                os.system('mkdir ' + out_dir)
+            fsl_dir = os.getenv('FSL_DIR')
+            img = nib.load(os.path.join(fsl_dir, 'data', 'standard',
+                                        'MNI152_T1_2mm_brain.nii.gz'))
+            # save predicted label
+            header = img.get_header()
+            coords = test_x[..., 1:4]
+            pred_data = arlib.write2array(coords, pred_y)
+            pred_data = np.around(pred_data)
+            out_file = os.path.join(out_dir, out_name)
+            mybase.save2nifti(np.around(pred_data), header, out_file)
+
 def save_dice(dice_dict, out_dir):
     """
     Save Dice dict to a file.

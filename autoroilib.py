@@ -9,28 +9,18 @@ import scipy.ndimage as ndimage
 
 from mypy import base as mybase
 
-def ext_sample(sid, mask_coord, class_label):
+def ext_sample(zstat_file, mask_coord, class_label, label_file=None):
     """
     Sample extraction.
 
-    Input: subject ID, a mask table (voxel coordinates in the mask),
-           and a class label list. 
-    Source: subject-specific zstat map and the corresponding label
+    Input: zstat and label image for a subject, a mask table (voxel
+           coordinates in the mask), and a class label list. 
     Output: samples from each subject.
 
     """
-    #-- data preparation
-    # zstat and label file
-    db_dir = r'/nfs/t2/atlas/database'
-    subject_dir = os.path.join(db_dir, sid, 'face-object')
-    if not os.path.exists(subject_dir):
-        print 'Subject ' + sid + 'does not exist in database.'
-        return
-    zstat_file = os.path.join(subject_dir, 'zstat1.nii.gz')
-    label_file = get_label_file(subject_dir)
-
-    # load data
-    label_data = nib.load(label_file).get_data()
+    #-- load data
+    if label_file:
+        label_data = nib.load(label_file).get_data()
     zstat_data = nib.load(zstat_file).get_data()
 
     #-- extract features for each voxel in the mask
@@ -58,13 +48,14 @@ def ext_sample(sid, mask_coord, class_label):
         feature_buff.append(coord[2])
         
         # get voxel label
-        label = label_data[tuple(coord)]
-        if not idx:
-            sample_label.append('label')
-        if label in class_label:
-            feature_buff.append(label)
-        else:
-            feature_buff.append(0)
+        if label_file:
+            label = label_data[tuple(coord)]
+            if not idx:
+                sample_label.append('label')
+            if label in class_label:
+                feature_buff.append(label)
+            else:
+                feature_buff.append(0)
         
         sample_data.append(feature_buff)
 
@@ -143,7 +134,18 @@ def ext_subj_feature(sid, mask_coord, class_label, out_dir):
     Warper of ext_sample and save_sample.
 
     """
-    sample_label, subj_data = ext_sample(sid, mask_coord, class_label)
+    # zstat and label file
+    db_dir = r'/nfs/t2/atlas/database'
+    subject_dir = os.path.join(db_dir, sid, 'face-object')
+    if not os.path.exists(subject_dir):
+        print 'Subject ' + sid + 'does not exist in database.'
+        return
+    zstat_file = os.path.join(subject_dir, 'zstat1.nii.gz')
+    label_file = get_label_file(subject_dir)
+
+    sample_label, subj_data = ext_sample(zstat_file,
+                                         mask_coord, class_label,
+                                         label_file=label_file)
     out_file = os.path.join(out_dir, sid + '_data.csv')
     save_sample(sample_label, subj_data, out_file)
 
