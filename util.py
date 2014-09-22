@@ -12,9 +12,15 @@ doc_dir = os.path.join(base_dir, 'doc')
 data_dir = os.path.join(base_dir, 'data')
 ma_dir = os.path.join(base_dir, 'multi-atlas')
 gcss_dir = os.path.join(base_dir, 'gcss')
+group08_dir = os.path.join(ma_dir, 'group08')
 
-# read all subjects' SID
-sessid_file = os.path.join(doc_dir, 'sessid')
+## read all subjects' SID from group 06
+#sessid_file = os.path.join(doc_dir, 'sessid')
+#sessid = open(sessid_file).readlines()
+#sessid = [line.strip() for line in sessid]
+
+# read all subjects' SID from group 08
+sessid_file = os.path.join(group08_dir, 'sessid')
 sessid = open(sessid_file).readlines()
 sessid = [line.strip() for line in sessid]
 
@@ -45,13 +51,13 @@ sessid = [line.strip() for line in sessid]
 #    f.write(','.join(buf) + '\n')
 
 ##-- merge predicted labels (left and right hemisphere)
-#l_dir = os.path.join(ma_dir, 'l_ffa_ofa')
-#r_dir = os.path.join(ma_dir, 'r_ffa_ofa')
-#targ_dir = os.path.join(ma_dir, 'predicted_files')
+#l_dir = os.path.join(group08_dir, 'l_predicted_files')
+#r_dir = os.path.join(group08_dir, 'r_predicted_files')
+#targ_dir = os.path.join(group08_dir, 'predicted_files')
 #
 #for subj in sessid:
-#    l_file = os.path.join(l_dir, '50_atlas_pred', subj + '_pred.nii.gz')
-#    r_file = os.path.join(r_dir, '50_atlas_pred', subj + '_pred.nii.gz')
+#    l_file = os.path.join(l_dir, subj + '_pred.nii.gz')
+#    r_file = os.path.join(r_dir, subj + '_pred.nii.gz')
 #    targ = os.path.join(targ_dir, subj + '_pred.nii.gz')
 #    os.system(' '.join(['fslmaths', l_file, '-add', r_file, targ]))
 #
@@ -59,6 +65,24 @@ sessid = [line.strip() for line in sessid]
 #cmd_str = ['fslmerge', '-a', merged_file]
 #for subj in sessid:
 #    temp = os.path.join(targ_dir, subj + '_pred.nii.gz')
+#    cmd_str.append(temp)
+#os.system(' '.join(cmd_str))
+
+##-- merge zstat file from 08 group
+#src_dir = os.path.join(group08_dir, 'localizer')
+#merged_file = os.path.join(group08_dir, 'merged_face_obj_zstat.nii.gz')
+#cmd_str = ['fslmerge', '-a', merged_file]
+#for subj in sessid:
+#    temp = os.path.join(src_dir, subj + '_face_obj_zstat.nii.gz')
+#    cmd_str.append(temp)
+#os.system(' '.join(cmd_str))
+
+##-- merge cope file from 08 group
+#src_dir = os.path.join(group08_dir, 'exp')
+#merged_file = os.path.join(group08_dir, 'merged_face_obj_cope.nii.gz')
+#cmd_str = ['fslmerge', '-a', merged_file]
+#for subj in sessid:
+#    temp = os.path.join(src_dir, subj + '_face_obj_cope.nii.gz')
 #    cmd_str.append(temp)
 #os.system(' '.join(cmd_str))
 
@@ -139,69 +163,72 @@ sessid = [line.strip() for line in sessid]
 #                        ts_data[..., new_idx[roi_idx[roi[1]]-1]])[0, 1]
 #        print subj, r
 
-##-- extract beta value for each subject
-#roi_label = [1, 2, 3, 4]
-#roi_name = ['rOFA', 'lOFA', 'rFFA', 'lFFA']
-##merged_pred = os.path.join(data_dir, 'merged_true_label.nii.gz')
-##merged_pred = os.path.join(ma_dir, 'predicted_files', 'merged_pred.nii.gz')
-##merged_pred = os.path.join(gcss_dir, 'merged_pred.nii.gz')
-#merged_cope = os.path.join(data_dir, 'merged_face_obj_cope.nii.gz')
-##merged_cope = os.path.join(data_dir, 'merged_zstat.nii.gz')
-#out_file = r'cope_peak_gss.log'
-#
-## load data
-##pred_data = np.around(nib.load(merged_pred).get_data())
-#cope_data = nib.load(merged_cope).get_data()
-#
-#out_data = []
-#
-#for i in range(len(sessid)):
-#    # peak roi file
-#    #pred_file = os.path.join(data_dir, 'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    #pred_file = os.path.join(ma_dir, 'predicted_files',
-#    #                         'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    pred_file = os.path.join(gcss_dir, 'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    pred_data = np.around(nib.load(pred_file).get_data())
-#    temp_data = []
-#    for roi in roi_label:
-#        #mask = pred_data[..., i].copy()
-#        mask = pred_data.copy()
-#        mask[mask!=roi] = 0
-#        mask[mask==roi] = 1
-#        if mask.sum():
-#            masked_cope = mask * cope_data[..., i]
-#            m = masked_cope.sum() / mask.sum()
-#            temp_data.append(m)
-#        else:
-#            temp_data.append(0)
-#    out_data.append(temp_data)
-#
-#f = open(out_file, 'w')
-#f.write(','.join(roi_name)+'\n')
-#for line in out_data:
-#    temp = [str(item) for item in line]
-#    f.write(','.join(temp)+'\n')
+#-- extract beta value for each subject
+roi_label = [1, 2, 3, 4]
+roi_name = ['rOFA', 'lOFA', 'rFFA', 'lFFA']
+#merged_pred = os.path.join(data_dir, 'merged_true_label.nii.gz')
+#merged_pred = os.path.join(ma_dir, 'predicted_files', 'merged_pred.nii.gz')
+#merged_pred = os.path.join(gcss_dir, 'merged_pred.nii.gz')
+merged_cope = os.path.join(group08_dir, 'merged_face_obj_cope.nii.gz')
+#merged_cope = os.path.join(data_dir, 'merged_zstat.nii.gz')
+out_file = r'cope_peak_gss.log'
 
-#-- copy data from 08 group
-src_dir = r'/nfs/h1/workingshop/huanglijie/fmri/face_feat_08'
-vol_dir = os.path.join(src_dir, 'volume')
-targ_dir = os.path.join(ma_dir, 'group08')
+# load data
+#pred_data = np.around(nib.load(merged_pred).get_data())
+cope_data = nib.load(merged_cope).get_data()
 
-sessid_08_file = os.path.join(src_dir, 'doc', 'feat_sessid')
-sessid_08 = open(sessid_08_file).readlines()
-sessid_08 = [line.strip() for line in sessid_08]
+out_data = []
 
-for subj in sessid_08:
-    rlf_file = os.path.join(vol_dir, subj, 'obj', 'obj.rlf')
-    rlf = open(rlf_file).readlines()
-    rlf = [line.strip() for line in rlf]
-    src_zstat = os.path.join(vol_dir, subj, 'obj.gfeat', 'cope1.feat',
-                             'stats', 'zstat1.nii.gz')
-    src_cope = os.path.join(vol_dir, subj, 'obj', rlf[2], 'func.feat',
-                            'reg_standard', 'stats', 'cope1.nii.gz')
-    targ_zstat = os.path.join(targ_dir, 'localizer',
-                              subj + '_face_obj_zstat.nii.gz')
-    targ_cope = os.path.join(targ_dir, 'exp', subj + '_face_obj_cope.nii.gz')
-    os.system('cp ' + src_cope + ' ' + targ_cope)
-    os.system('cp ' + src_zstat + ' ' + targ_zstat)
+for i in range(len(sessid)):
+    # peak roi file
+    #pred_file = os.path.join(data_dir, 'peak_mask_1', sessid[i]+'_atlas.nii.gz')
+    #pred_file = os.path.join(ma_dir, 'predicted_files',
+    #                         'peak_mask_1', sessid[i]+'_atlas.nii.gz')
+    #pred_file = os.path.join(group08_dir, 'predicted_files',
+    #                         'peak_mask_1', sessid[i]+'_atlas.nii.gz')
+    pred_file = os.path.join(group08_dir, 'gss',
+                             'peak_mask_1', sessid[i]+'_atlas.nii.gz')
+    pred_data = np.around(nib.load(pred_file).get_data())
+    temp_data = []
+    for roi in roi_label:
+        #mask = pred_data[..., i].copy()
+        mask = pred_data.copy()
+        mask[mask!=roi] = 0
+        mask[mask==roi] = 1
+        if mask.sum():
+            masked_cope = mask * cope_data[..., i]
+            m = masked_cope.sum() / mask.sum()
+            temp_data.append(m)
+        else:
+            temp_data.append(0)
+    out_data.append(temp_data)
+
+f = open(out_file, 'w')
+f.write(','.join(roi_name)+'\n')
+for line in out_data:
+    temp = [str(item) for item in line]
+    f.write(','.join(temp)+'\n')
+
+##-- copy data from 08 group
+#src_dir = r'/nfs/h1/workingshop/huanglijie/fmri/face_feat_08'
+#vol_dir = os.path.join(src_dir, 'volume')
+#targ_dir = os.path.join(ma_dir, 'group08')
+#
+#sessid_08_file = os.path.join(src_dir, 'doc', 'feat_sessid')
+#sessid_08 = open(sessid_08_file).readlines()
+#sessid_08 = [line.strip() for line in sessid_08]
+#
+#for subj in sessid_08:
+#    rlf_file = os.path.join(vol_dir, subj, 'obj', 'obj.rlf')
+#    rlf = open(rlf_file).readlines()
+#    rlf = [line.strip() for line in rlf]
+#    src_zstat = os.path.join(vol_dir, subj, 'obj.gfeat', 'cope1.feat',
+#                             'stats', 'zstat1.nii.gz')
+#    src_cope = os.path.join(vol_dir, subj, 'obj', rlf[2], 'func.feat',
+#                            'reg_standard', 'stats', 'cope1.nii.gz')
+#    targ_zstat = os.path.join(targ_dir, 'localizer',
+#                              subj + '_face_obj_zstat.nii.gz')
+#    targ_cope = os.path.join(targ_dir, 'exp', subj + '_face_obj_cope.nii.gz')
+#    os.system('cp ' + src_cope + ' ' + targ_cope)
+#    os.system('cp ' + src_zstat + ' ' + targ_zstat)
 

@@ -10,9 +10,9 @@ import macro
 
 base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
 doc_dir = os.path.join(base_dir, 'doc')
-data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ffa_ofa')
+data_dir = os.path.join(base_dir, 'multi-atlas', 'l_ffa_ofa')
 
-class_label = [1, 3]
+class_label = [2, 4]
 #atlas_num = [1, 5] + range(10, 201, 10)
 #atlas_num = [1, 5]
 atlas_num = [50]
@@ -82,7 +82,7 @@ mask_coords = arlib.get_mask_coord(mask_data, data_dir)
 forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
 
 test_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'localizer')
-pred_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'predicted_files')
+pred_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'l_predicted_files')
 test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'group08', 'sessid')
 test_sessid = open(test_sessid_file).readlines()
 test_sessid = [line.strip() for line in test_sessid]

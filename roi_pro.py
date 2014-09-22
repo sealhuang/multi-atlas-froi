@@ -13,27 +13,36 @@ doc_dir = os.path.join(base_dir, 'doc')
 data_dir = os.path.join(base_dir, 'data')
 ma_dir = os.path.join(base_dir, 'multi-atlas', 'predicted_files')
 gcss_dir = os.path.join(base_dir, 'gcss')
+group08_dir = os.path.join(base_dir, 'multi-atlas', 'group08')
 
-# read all subjects' SID
-sessid_file = os.path.join(doc_dir, 'sessid')
+## read all subjects' SID of 06 group
+#sessid_file = os.path.join(doc_dir, 'sessid')
+#sessid = open(sessid_file).readlines()
+#sessid = [line.strip() for line in sessid]
+
+# read all subjects' SID of 08 group
+sessid_file = os.path.join(group08_dir, 'sessid')
 sessid = open(sessid_file).readlines()
 sessid = [line.strip() for line in sessid]
 
 # load label and zstat file
 #label_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
 #label_file = os.path.join(gcss_dir, 'merged_pred.nii.gz')
-label_file = os.path.join(ma_dir, 'merged_pred.nii.gz')
+#label_file = os.path.join(ma_dir, 'merged_pred.nii.gz')
+label_file = os.path.join(group08_dir, 'predicted_files', 'merged_pred.nii.gz')
 label_data = nib.load(label_file).get_data()
 header = nib.load(label_file).get_header()
 
-zstat_file = os.path.join(data_dir, 'merged_zstat.nii.gz')
+#zstat_file = os.path.join(data_dir, 'merged_zstat.nii.gz')
+zstat_file = os.path.join(group08_dir, 'merged_face_obj_zstat.nii.gz')
 zstat_data = nib.load(zstat_file).get_data()
 
 roi_list = [1, 2, 3, 4]
 
 #out_dir = os.path.join(data_dir, 'peak_mask_1')
 #out_dir = os.path.join(gcss_dir, 'peak_mask_1')
-out_dir = os.path.join(ma_dir, 'peak_mask_1')
+#out_dir = os.path.join(ma_dir, 'peak_mask_1')
+out_dir = os.path.join(group08_dir, 'predicted_files', 'peak_mask_1')
 
 for i in range(len(sessid)):
     ind_label = label_data[..., i].copy()
