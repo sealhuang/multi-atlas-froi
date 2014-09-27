@@ -6,8 +6,8 @@ import time
 import numpy as np
 import re
 
-import autoroilib as arlib
-import macro
+import lib
+import model
 
 def get_label_file(subject_dir):
     """
@@ -51,87 +51,47 @@ def get_label_list(sid_list, db_dir):
         label_list.append(label)
     return label_list
 
-def ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
-                    output_dir, label_file_list=None):
+def model_training_with_LOOCV():
     """
-    Warper of ext_sample and save_sample for each subject.
-
-    """
-    subj_num = len(sid_list)
-    zstat_num = len(zstat_file_list)
-    if not subj_num == zstat_num:
-        print 'Inconsistency of input subject number! (zstat file list)'
-        return
-    if label_file_list:
-        label_num = len(label_list_num)
-        if not subj_num == label_num:
-            print 'Inconsistency of input subject number! (label file list)'
-            return
-
-    for i in range(subj_num):
-        subj = sid_list[i]
-        if label_file_list:
-            feature_name, sample_data = arlib.ext_sample(zstat_file_list[i],
-                                                         mask_coord,
-                                                         class_label,
-                                                         label_file_list[i])
-        else:
-            feature_name, sample_data = arlib.ext_sample(zstat_file_list[i],
-                                                         mask_coord,
-                                                         class_label)
-        out_file = os.path.join(output_dir, subj + '_data.csv')
-        arlib.save_sample(feature_name, sample_data, out_file)
-
-def get_subj_sample(sid_list, data_dir):
-    """
-    Get data for a list of subjects.
-    #sid_list# could be either a subject's SID or a SID list.
+    Training model and test it with leave-one-out cross-validation.
 
     """
-    if isinstance(sid_list, str):
-        sid_list = [sid_list]
-    if not isinstance(sid_list, list):
-        print 'Invalid input!'
-        return
-    samples = np.array([])
-    for subj in sid_list:
-        f = os.path.join(data_dir, subj + '_data.csv')
-        data = np.loadtxt(f, skiprows=1, delimiter=',')
-        if not samples.size:
-            samples = data
-        else:
-            samples = np.vstack((samples, data))
-    return samples
+    print 'Traing model and test it with leave-one-out cross-validation ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'code_test')
 
-    
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
 
+    #-- parameter config
+    class_label = [1, 3]
+    atlas_num = [50]
+    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = range(1, 201)
 
-db_dir = r'/nfs/t2/atlas/database'
-base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
-doc_dir = os.path.join(base_dir, 'doc')
-data_dir = os.path.join(base_dir, 'multi-atlas', 'l_ffa_ofa')
+    #-- preparation for model training
+    # get zstat and label file for training dataset
+    zstat_file_list = get_zstat_list(sessid, db_dir)
+    label_file_list = get_label_list(sessid, db_dir)
+    model.prepare(sessid, zstat_file_list, label_file_list,
+                  class_label, data_dir)
 
-class_label = [2, 4]
-#atlas_num = [1, 5] + range(10, 201, 10)
-#atlas_num = [1, 5]
-atlas_num = [50]
-#atlas_num = range(1, 201)
+    #-- model training
+    forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+    dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+                                    forest_list, classes_list, spatial_ptn)
 
-# read all subjects' SID
-sessid_file = os.path.join(doc_dir, 'sessid')
-sessid = open(sessid_file).readlines()
-sessid = [line.strip() for line in sessid]
+    #-- save dice to a file
+    model.save_dice(dice, data_dir)
 
-## extract samples
-#macro.extract_sample(sessid, class_label, data_dir)
+if __name__ == '__main__':
+    model_training_with_LOOCV()
 
-## model training and testing
-#forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
-#dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-#                                forest_list, classes_list, spatial_ptn)
-#
-## save dice to a file
-#macro.save_dice(dice, data_dir)
 
 ##-- random atlas selection
 #for i in range(50):
@@ -175,21 +135,21 @@ sessid = [line.strip() for line in sessid]
 ## save dice to a file
 #macro.save_dice(dice, data_dir)
 
-#-- test model in an independent dataset
-mask_data = arlib.make_prior(sessid, class_label, data_dir)
-mask_coords = arlib.get_mask_coord(mask_data, data_dir)
-forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
-
-test_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'localizer')
-pred_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'l_predicted_files')
-test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'group08', 'sessid')
-test_sessid = open(test_sessid_file).readlines()
-test_sessid = [line.strip() for line in test_sessid]
-
-for subj in test_sessid:
-    zstat_file = os.path.join(test_dir, subj + '_face_obj_zstat.nii.gz')
-    sample_label, sample_data = arlib.ext_sample(zstat_file, mask_coords,
-                                                 class_label)
-    macro.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
-                  class_label, forest_list, classes_list, spatial_ptn)
+##-- test model in an independent dataset
+#mask_data = lib.make_prior(sessid, class_label, data_dir)
+#mask_coords = lib.get_mask_coord(mask_data, data_dir)
+#forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
+#
+#test_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'localizer')
+#pred_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'l_predicted_files')
+#test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'group08', 'sessid')
+#test_sessid = open(test_sessid_file).readlines()
+#test_sessid = [line.strip() for line in test_sessid]
+#
+#for subj in test_sessid:
+#    zstat_file = os.path.join(test_dir, subj + '_face_obj_zstat.nii.gz')
+#    sample_label, sample_data = lib.ext_sample(zstat_file, mask_coords,
+#                                                 class_label)
+#    macro.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
+#                  class_label, forest_list, classes_list, spatial_ptn)
 

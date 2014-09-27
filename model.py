@@ -6,36 +6,81 @@ import numpy as np
 import nibabel as nib
 import time
 
-# modules used for sample extraction
-import multiprocessing as mps
-import functools
-
 # modules for model specification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import normalized_mutual_info_score
 
-import autoroilib as arlib
+import lib as arlib
 from mypy import math as mymath
 from mypy import base as mybase
 
-def extract_sample(sessid, class_label, data_dir):
+def ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
+                    output_dir, label_file_list=None):
     """
-    Extract samples from all subjects.
+    Warper of ext_sample and save_sample for each subject.
+
+    """
+    subj_num = len(sid_list)
+    zstat_num = len(zstat_file_list)
+    if not subj_num == zstat_num:
+        print 'Inconsistency of input subject number! (zstat file list)'
+        return
+    if label_file_list:
+        label_num = len(label_list_num)
+        if not subj_num == label_num:
+            print 'Inconsistency of input subject number! (label file list)'
+            return
+
+    for i in range(subj_num):
+        subj = sid_list[i]
+        if label_file_list:
+            feature_name, sample_data = lib.ext_sample(zstat_file_list[i],
+                                                         mask_coord,
+                                                         class_label,
+                                                         label_file_list[i])
+        else:
+            feature_name, sample_data = lib.ext_sample(zstat_file_list[i],
+                                                         mask_coord,
+                                                         class_label)
+        out_file = os.path.join(output_dir, subj + '_data.csv')
+        lib.save_sample(feature_name, sample_data, out_file)
+
+def get_subj_sample(sid_list, data_dir):
+    """
+    Get data for a list of subjects.
+    #sid_list# could be either a subject's SID or a SID list.
+
+    """
+    if isinstance(sid_list, str):
+        sid_list = [sid_list]
+    if not isinstance(sid_list, list):
+        print 'Invalid input!'
+        return
+    samples = np.array([])
+    for subj in sid_list:
+        f = os.path.join(data_dir, subj + '_data.csv')
+        data = np.loadtxt(f, skiprows=1, delimiter=',')
+        if not samples.size:
+            samples = data
+        else:
+            samples = np.vstack((samples, data))
+    return samples
+
+def prepare(sid_list, zstat_file_list, label_file_list,
+            class_label, data_dir):
+    """
+    Preparation for model training, including mask generation, sample
+    extraction for each subject from training dataset.
 
     """
     # generate mask
-    mask_data = arlib.make_prior(sessid, class_label, data_dir)
-    mask_coords = arlib.get_mask_coord(mask_data, data_dir)
-    # extract features from each subject
-    pool = mps.Pool(20)
-    result = pool.map(functools.partial(arlib.ext_subj_feature,
-                                        mask_coord=mask_coords,
-                                        class_label=class_label,
-                                        out_dir=data_dir),
-                      sessid)
-    pool.terminate()
+    mask_data = lib.make_mask(label_file_list, class_label, data_dir)
+    mask_coord = lib.get_mask_coord(mask_data, data_dir)
+    # extract samples from each subject
+    ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
+                    data_dir, label_file_list)
 
-def train_model(sessid, data_dir, n_tree=30, d_tree=20):
+def train(sid_list, data_dir, n_tree=30, d_tree=20):
     """
     Traing each atlas forest with one subject's data.
 
@@ -44,8 +89,9 @@ def train_model(sessid, data_dir, n_tree=30, d_tree=20):
     classes_list = []
     spatial_ptn = None
     print 'Model training ...'
-    for subj in sessid:
-        train_data = arlib.get_subj_data(subj, data_dir)
+    start_time = time.time()
+    for subj in sid_list:
+        train_data = get_subj_sample(subj, data_dir)
         z_vtr = train_data[..., 0].copy()
         z_vtr[z_vtr<2.3] = 0
         z_vtr[z_vtr>0] = 1
@@ -55,7 +101,7 @@ def train_model(sessid, data_dir, n_tree=30, d_tree=20):
         train_y = train_data[smp_mask, -1]
         # save activation pattern
         if not isinstance(spatial_ptn, np.ndarray):
-            spatial_ptn = np.zeros((train_data.shape[0], len(sessid)))
+            spatial_ptn = np.zeros((train_data.shape[0], len(sid_list)))
             count = 0
         spatial_ptn[..., count] = z_vtr
         count += 1
@@ -67,7 +113,7 @@ def train_model(sessid, data_dir, n_tree=30, d_tree=20):
         classes_list.append(clf.classes_)
     return forest_list, classes_list, spatial_ptn
 
-def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
                        forest_list, classes_list, spatial_ptn,
                        save_nifti=False, sorted=True, single_atlas=False):
     """
@@ -79,9 +125,9 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
     for idx in class_label:
         dice[idx] = []
 
-    for i in range(len(sessid)):
-        print 'Test subject %s'%(sessid[i])
-        test_data = arlib.get_subj_data(sessid[i], data_dir)
+    for i in range(len(sid_list)):
+        print 'Test subject %s'%(sid_list[i])
+        test_data = get_subj_sample(sid_list[i], data_dir)
         # mask out voxels which are not activated significantly
         smp_mask = test_data[..., 0] >= 2.3
         test_x = test_data[smp_mask, 0:4]
@@ -90,7 +136,7 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
         # define similarity index
         similarity = []
         atlas_idx = []
-        for j in range(len(sessid)):
+        for j in range(len(sid_list)):
             if i == j:
                 continue
             atlas_idx.append(j)
@@ -165,7 +211,7 @@ def leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                 coords = test_x[..., 1:4]
                 pred_data = arlib.write2array(coords, pred_y)
                 pred_data = np.around(pred_data)
-                out_file = os.path.join(pred_dir, sessid[i] + '_pred.nii.gz')
+                out_file = os.path.join(pred_dir, sid_list[i]+'_pred.nii.gz')
                 mybase.save2nifti(pred_data, header, out_file)
 
         for idx in class_label:

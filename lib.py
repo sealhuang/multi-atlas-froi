@@ -113,7 +113,7 @@ def save_sample(feature_name, sample_data, out_file):
         f.write(','.join(strline) + '\n')
     f.close()
 
-def samples_stat(samples):
+def sample_category_stat(samples):
     """
     A brief stats of categories of the samples.
 
@@ -135,13 +135,4 @@ def write2array(coords, voxel_val):
     z_coord = tuple(coords[:, 2])
     data[x_coord, y_coord, z_coord] = voxel_val
     return data
-
-def get_subj_sample_num(stats_file):
-    """
-    Get sample size for each subject.
-
-    """
-    info = open(stats_file).readlines()
-    info = [int(line.strip().split()[1]) for line in info]
-    return np.array(info)
 
