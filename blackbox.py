@@ -4,93 +4,249 @@
 import os
 import time
 import numpy as np
+import re
 
-import autoroilib as arlib
-import macro
+import lib
+import model
 
-base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
-doc_dir = os.path.join(base_dir, 'doc')
-data_dir = os.path.join(base_dir, 'multi-atlas', 'l_ffa_ofa')
+def get_label_file(subject_dir):
+    """
+    Get a subject-specific label file.
 
-class_label = [2, 4]
-#atlas_num = [1, 5] + range(10, 201, 10)
-#atlas_num = [1, 5]
-atlas_num = [50]
-#atlas_num = range(1, 201)
+    """
+    f_list = os.listdir(subject_dir)
+    for f in f_list:
+        if re.search('_ff.nii.gz', f):
+            return os.path.join(subject_dir, f)
 
-# read all subjects' SID
-sessid_file = os.path.join(doc_dir, 'sessid')
-sessid = open(sessid_file).readlines()
-sessid = [line.strip() for line in sessid]
+def get_zstat_list(sid_list, db_dir):
+    """
+    Get a zstat file list based on sessid list and database directory.
 
-## extract samples
-#macro.extract_sample(sessid, class_label, data_dir)
+    """
+    zstat_list = []
+    for subj in sid_list:
+        subject_dir = os.path.join(db_dir, subj, 'face-object')
+        if not os.path.exists(subject_dir):
+            print 'Subject %s does not exist in database.'%(subj)
+            return
+        zstat = os.path.join(subject_dir, 'zstat1.nii.gz')
+        zstat_list.append(zstat)
+    return zstat_list
 
-## model training and testing
-#forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
-#dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-#                                forest_list, classes_list, spatial_ptn)
-#
-## save dice to a file
-#macro.save_dice(dice, data_dir)
+def get_label_list(sid_list, db_dir):
+    """
+    Get a zstat file list based on sessid list and database directory.
 
-##-- random atlas selection
-#for i in range(50):
-#    #start_time = time.time()
-#    # model training and testing
-#    forest_list, classes_list, spatial_ptn = macro.train_model(sessid,
-#                                                               data_dir)
-#    dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-#                                    forest_list, classes_list, spatial_ptn,
-#                                    sorted=False)
-#    #print 'Cost %s'%(time.time()-start_time)
-#    ## save dice to a file
-#    #macro.save_dice(dice, data_dir)
+    """
+    label_list = []
+    for subj in sid_list:
+        subject_dir = os.path.join(db_dir, subj, 'face-object')
+        if not os.path.exists(subject_dir):
+            print 'Subject %s does not exist in database.'%(subj)
+            return
+        label = get_label_file(subject_dir)
+        label_list.append(label)
+    return label_list
 
-##-- effect of forest parameter
-#tree_num = range(10, 51, 5)
-#tree_depth = range(10, 31, 5)
-#
-#for n in tree_num:
-#    for d in tree_depth:
-#        print 'number - %s, depth - %s'%(n, d)
-#        forest_list, classes_list, spatial_ptn = macro.train_model(sessid,
-#                                                                   data_dir,
-#                                                                   n_tree=n,
-#                                                                   d_tree=d)
-#
-#        dice = macro.leave_one_out_test(sessid, atlas_num, data_dir,
-#                                        class_label, forest_list,
-#                                        classes_list, spatial_ptn)
-#
-#        # save dice to a file
-#        macro.save_dice(dice, data_dir)
+def model_training_with_LOOCV_testing():
+    """
+    Training model and test it with leave-one-out cross-validation.
 
-##-- relation between atlas rank and Dice
-## model training and testing
-#forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
-#dice = macro.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-#                                forest_list, classes_list, spatial_ptn,
-#                                single_atlas=True)
-#
-## save dice to a file
-#macro.save_dice(dice, data_dir)
+    """
+    print 'Traing model and test it with leave-one-out cross-validation ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'code_test')
 
-#-- test model in an independent dataset
-mask_data = arlib.make_prior(sessid, class_label, data_dir)
-mask_coords = arlib.get_mask_coord(mask_data, data_dir)
-forest_list, classes_list, spatial_ptn = macro.train_model(sessid, data_dir)
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
 
-test_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'localizer')
-pred_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'l_predicted_files')
-test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'group08', 'sessid')
-test_sessid = open(test_sessid_file).readlines()
-test_sessid = [line.strip() for line in test_sessid]
+    #-- parameter config
+    class_label = [1, 3]
+    atlas_num = [50]
+    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = range(1, 201)
 
-for subj in test_sessid:
-    zstat_file = os.path.join(test_dir, subj + '_face_obj_zstat.nii.gz')
-    sample_label, sample_data = arlib.ext_sample(zstat_file, mask_coords,
-                                                 class_label)
-    macro.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
-                  class_label, forest_list, classes_list, spatial_ptn)
+    #-- preparation for model training
+    # get zstat and label file for training dataset
+    zstat_file_list = get_zstat_list(sessid, db_dir)
+    label_file_list = get_label_list(sessid, db_dir)
+    model.prepare(sessid, zstat_file_list, label_file_list,
+                  class_label, data_dir)
+
+    #-- model training
+    forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+    dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+                                    forest_list, classes_list, spatial_ptn)
+
+    #-- save dice to a file
+    model.save_dice(dice, data_dir)
+
+def model_testing_with_LOOCV_random():
+    """
+    Training a model with random atlas selection, and test it using
+    leave-one-out cross-validation.
+
+    """
+    print 'Traing model with random atlas selection and test it with ' + \
+          'leave-one-out cross-validation ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'code_test')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    #-- parameter config
+    class_label = [1, 3]
+    atlas_num = [50]
+    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = range(1, 201)
+    iter_num = 50
+
+    for i in range(iter_num):
+        print 'Iter - %s'%(i)
+        start_time = time.time()
+        # model training and testing
+        forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+        dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+                                        forest_list, classes_list, spatial_ptn,
+                                        sorted=False)
+        print 'Cost %s'%(time.time()-start_time)
+        # save dice to a file
+        model.save_dice(dice, data_dir)
+
+def forest_parameter_selection():
+    """
+    Assessment of impact of forest parameters.
+
+    """
+    print 'Assess the imapct of forest parameters with leave-one-out ' + \
+          'cross-validation ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'code_test')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    #-- parameter config
+    class_label = [1, 3]
+    atlas_num = [50]
+    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = range(1, 201)
+
+    tree_num = range(10, 51, 5)
+    tree_depth = range(10, 31, 5)
+
+    for n in tree_num:
+        for d in tree_depth:
+            print 'number - %s, depth - %s'%(n, d)
+            forest_list, classes_list, spatial_ptn = model.train(sessid,
+                                                                 data_dir,
+                                                                 n_tree=n,
+                                                                 d_tree=d)
+
+            dice = model.leave_one_out_test(sessid, atlas_num, data_dir,
+                                            class_label, forest_list,
+                                            classes_list, spatial_ptn)
+
+            # save dice to a file
+            model.save_dice(dice, data_dir)
+
+def model_testing_with_LOOCV_single_atlas():
+    """
+    Training a model with one atlas selected.
+
+    """
+    print 'Traing model with one atlas selected and test it with ' + \
+          'leave-one-out cross-validation ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'code_test')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    #-- parameter config
+    class_label = [1, 3]
+    atlas_num = [50]
+    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = range(1, 201)
+    iter_num = 50
+
+    #-- model training and testing
+    forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+    dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
+                                    forest_list, classes_list, spatial_ptn,
+                                    single_atlas=True)
+
+    #-- save dice to a file
+    model.save_dice(dice, data_dir)
+
+def model_testing_independent():
+    """
+    Training model and test it with an independent dataset.
+
+    """
+    print 'Traing model and test it with an independent dataset.'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'code_test')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    #-- parameter config
+    class_label = [1, 3]
+    atlas_num = [50]
+    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = range(1, 201)
+
+    #-- model training
+    forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+
+    #-- load mask coordinate derived from training dataset
+    mask_coords = lib.load_mask_coord(data_dir)
+
+    #-- load testing dataset
+    test_dir = os.path.join(base_dir, 'multi-atlas', 'group08', 'localizer')
+    pred_dir = os.path.join(base_dir, 'multi-atlas', 'group08',
+                            'r_predicted_files')
+    test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'group08',
+                                    'sessid')
+    test_sessid = open(test_sessid_file).readlines()
+    test_sessid = [line.strip() for line in test_sessid]
+    
+    for subj in test_sessid:
+        zstat_file = os.path.join(test_dir, subj + '_face_obj_zstat.nii.gz')
+        feature_name, sample_data = lib.ext_sample(zstat_file, mask_coords,
+                                                   class_label)
+        model.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
+                      class_label, forest_list, classes_list, spatial_ptn)
+
+if __name__ == '__main__':
+    #model_training_with_LOOCV_testing()
+    model_testing_independent()
 
