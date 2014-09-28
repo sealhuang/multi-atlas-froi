@@ -18,8 +18,6 @@ def get_label_file(subject_dir):
     for f in f_list:
         if re.search('_ff.nii.gz', f):
             return os.path.join(subject_dir, f)
-        else:
-            return None
 
 def get_zstat_list(sid_list, db_dir):
     """
@@ -28,7 +26,7 @@ def get_zstat_list(sid_list, db_dir):
     """
     zstat_list = []
     for subj in sid_list:
-        subject_dir = os.path.join(db_dir, sid, 'face-object')
+        subject_dir = os.path.join(db_dir, subj, 'face-object')
         if not os.path.exists(subject_dir):
             print 'Subject %s does not exist in database.'%(subj)
             return
@@ -43,7 +41,7 @@ def get_label_list(sid_list, db_dir):
     """
     label_list = []
     for subj in sid_list:
-        subject_dir = os.path.join(db_dir, sid, 'face-object')
+        subject_dir = os.path.join(db_dir, subj, 'face-object')
         if not os.path.exists(subject_dir):
             print 'Subject %s does not exist in database.'%(subj)
             return

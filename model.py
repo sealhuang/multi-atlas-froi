@@ -26,7 +26,7 @@ def ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
         print 'Inconsistency of input subject number! (zstat file list)'
         return
     if label_file_list:
-        label_num = len(label_list_num)
+        label_num = len(label_file_list)
         if not subj_num == label_num:
             print 'Inconsistency of input subject number! (label file list)'
             return
@@ -34,16 +34,16 @@ def ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
     for i in range(subj_num):
         subj = sid_list[i]
         if label_file_list:
-            feature_name, sample_data = lib.ext_sample(zstat_file_list[i],
+            feature_name, sample_data = arlib.ext_sample(zstat_file_list[i],
                                                          mask_coord,
                                                          class_label,
                                                          label_file_list[i])
         else:
-            feature_name, sample_data = lib.ext_sample(zstat_file_list[i],
+            feature_name, sample_data = arlib.ext_sample(zstat_file_list[i],
                                                          mask_coord,
                                                          class_label)
         out_file = os.path.join(output_dir, subj + '_data.csv')
-        lib.save_sample(feature_name, sample_data, out_file)
+        arlib.save_sample(feature_name, sample_data, out_file)
 
 def get_subj_sample(sid_list, data_dir):
     """
@@ -74,8 +74,8 @@ def prepare(sid_list, zstat_file_list, label_file_list,
 
     """
     # generate mask
-    mask_data = lib.make_mask(label_file_list, class_label, data_dir)
-    mask_coord = lib.get_mask_coord(mask_data, data_dir)
+    mask_data = arlib.make_mask(label_file_list, class_label, data_dir)
+    mask_coord = arlib.get_mask_coord(mask_data, data_dir)
     # extract samples from each subject
     ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
                     data_dir, label_file_list)
