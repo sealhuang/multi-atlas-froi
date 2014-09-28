@@ -111,6 +111,7 @@ def train(sid_list, data_dir, n_tree=30, d_tree=20):
         clf.fit(train_x, train_y)
         forest_list.append(clf)
         classes_list.append(clf.classes_)
+    print 'Model training costs %s seconds'%(time.time() - start_time)
     return forest_list, classes_list, spatial_ptn
 
 def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
@@ -247,7 +248,7 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
 
     # label the activation voxels with atlas forests (AFs)
     for num in atlas_num:
-        print 'atlas number %s'%(num)
+        #print 'atlas number %s'%(num)
         if sorted:
             if not single_atlas:
                 selected_atlas = sorted_sim_idx[0:num]

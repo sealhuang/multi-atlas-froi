@@ -101,6 +101,21 @@ def get_mask_coord(mask_data, output_dir):
         f.write(','.join(strline) + '\n')
     return c
 
+def load_mask_coord(data_dir):
+    """
+    Load mask coordinate from the saved file.
+
+    """
+    f = os.path.join(data_dir, 'mask_coords.csv')
+    info = open(f).readlines()
+    info.pop(0) 
+    info = [line.strip().split(',') for line in info]
+    c = []
+    for line in info:
+        temp = [int(item) for item in line]
+        c.append(temp)
+    return c
+
 def save_sample(feature_name, sample_data, out_file):
     """
     Save sample data into a file.
