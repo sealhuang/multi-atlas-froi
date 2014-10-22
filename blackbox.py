@@ -26,7 +26,7 @@ def get_zstat_list(sid_list, db_dir):
     """
     zstat_list = []
     for subj in sid_list:
-        subject_dir = os.path.join(db_dir, subj, 'face-object')
+        subject_dir = os.path.join(db_dir, subj, 'obj', 'face-object')
         if not os.path.exists(subject_dir):
             print 'Subject %s does not exist in database.'%(subj)
             return
@@ -41,7 +41,7 @@ def get_label_list(sid_list, db_dir):
     """
     label_list = []
     for subj in sid_list:
-        subject_dir = os.path.join(db_dir, subj, 'face-object')
+        subject_dir = os.path.join(db_dir, subj, 'obj', 'face-object')
         if not os.path.exists(subject_dir):
             print 'Subject %s does not exist in database.'%(subj)
             return
@@ -56,7 +56,7 @@ def model_training_with_LOOCV_testing():
     """
     print 'Traing model and test it with leave-one-out cross-validation ...'
     #-- directory config
-    db_dir = r'/nfs/t2/atlas/database'
+    db_dir = r'/nfs/t2/BAA/SSR'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
     data_dir = os.path.join(base_dir, 'code_test')
@@ -68,8 +68,9 @@ def model_training_with_LOOCV_testing():
 
     #-- parameter config
     class_label = [1, 3]
-    atlas_num = [50]
+    #atlas_num = [50]
     #atlas_num = [1, 5] + range(10, 201, 10)
+    atlas_num = range(1, 10)
     #atlas_num = range(1, 201)
 
     #-- preparation for model training
@@ -108,8 +109,8 @@ def model_testing_with_LOOCV_random():
 
     #-- parameter config
     class_label = [1, 3]
-    atlas_num = [50]
-    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = [50]
+    atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 201)
     iter_num = 50
 
@@ -178,7 +179,7 @@ def model_testing_with_LOOCV_single_atlas():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'code_test')
+    data_dir = os.path.join(base_dir, 'r_code_test')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -187,10 +188,10 @@ def model_testing_with_LOOCV_single_atlas():
 
     #-- parameter config
     class_label = [1, 3]
-    atlas_num = [50]
+    #atlas_num = [50]
     #atlas_num = [1, 5] + range(10, 201, 10)
-    #atlas_num = range(1, 201)
-    iter_num = 50
+    atlas_num = range(1, 201)
+    #iter_num = 50
 
     #-- model training and testing
     forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
@@ -249,5 +250,6 @@ def model_testing_independent():
 
 if __name__ == '__main__':
     #model_training_with_LOOCV_testing()
-    model_testing_independent()
+    #model_testing_independent()
+    model_testing_with_LOOCV_single_atlas()
 
