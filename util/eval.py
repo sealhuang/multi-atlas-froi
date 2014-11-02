@@ -10,7 +10,7 @@ from mypy import math as mymath
 base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
 doc_dir = os.path.join(base_dir, 'doc')
 data_dir = os.path.join(base_dir, 'data')
-pred_dir = os.path.join(base_dir, 'multi-atlas', 'predicted_files')
+pred_dir = os.path.join(base_dir, 'predicted_files')
 #pred_dir = os.path.join(base_dir, 'gcss')
 
 # read all subjects' SID

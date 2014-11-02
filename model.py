@@ -103,12 +103,12 @@ def train(sid_list, data_dir, n_tree=30, d_tree=20):
         if not isinstance(spatial_ptn, np.ndarray):
             spatial_ptn = np.zeros((train_data.shape[0], len(sid_list)))
             count = 0
-        #-- store spatial pattern
-        act_vtr = train_data[..., 0].copy()
-        act_vtr[act_vtr<0] = 0
-        spatial_ptn[..., count] = act_vtr
-        #--
-        #spatial_ptn[..., count] = z_vtr
+        ##-- store spatial pattern
+        #act_vtr = train_data[..., 0].copy()
+        #act_vtr[act_vtr<0] = 0
+        #spatial_ptn[..., count] = act_vtr
+        ##--
+        spatial_ptn[..., count] = z_vtr
         count += 1
         clf = RandomForestClassifier(n_estimators=n_tree,
                                      max_depth=d_tree,
@@ -146,11 +146,11 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
             if i == j:
                 continue
             atlas_idx.append(j)
-            #r = normalized_mutual_info_score(spatial_ptn[..., i],
-            #                                 spatial_ptn[..., j])
+            r = normalized_mutual_info_score(spatial_ptn[..., i],
+                                             spatial_ptn[..., j])
             #r = mymath.mutual_information(spatial_ptn[..., i],
             #                              spatial_ptn[..., j])
-            r = np.corrcoef(spatial_ptn[..., i], spatial_ptn[..., j])[0, 1]
+            #r = np.corrcoef(spatial_ptn[..., i], spatial_ptn[..., j])[0, 1]
             similarity.append(r)
 
         # sort the similarity
@@ -248,10 +248,10 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
     # define similarity index
     similarity = []
     for i in range(len(forest_list)):
-        #r = normalized_mutual_info_score(spatial_ptn[..., i], z_vtr)
-        z_vtr = x_mtx[..., 0].copy()
-        z_vtr[z_vtr<0] = 0
-        r = np.corrcoef(spatial_ptn[..., i], z_vtr)[0, 1]
+        r = normalized_mutual_info_score(spatial_ptn[..., i], z_vtr)
+        #z_vtr = x_mtx[..., 0].copy()
+        #z_vtr[z_vtr<0] = 0
+        #r = np.corrcoef(spatial_ptn[..., i], z_vtr)[0, 1]
         similarity.append(r)
 
     # sort the similarity
