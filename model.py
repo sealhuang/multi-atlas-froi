@@ -11,8 +11,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import normalized_mutual_info_score
 
 import lib as arlib
-from mypy import math as mymath
-from mypy import base as mybase
+from nipytools import math as mymath
+from nipytools import base as mybase
 
 def ext_subj_sample(sid_list, zstat_file_list, mask_coord, class_label,
                     output_dir, label_file_list=None):
@@ -103,12 +103,12 @@ def train(sid_list, data_dir, n_tree=30, d_tree=20):
         if not isinstance(spatial_ptn, np.ndarray):
             spatial_ptn = np.zeros((train_data.shape[0], len(sid_list)))
             count = 0
-        ##-- store spatial pattern
-        #act_vtr = train_data[..., 0].copy()
-        #act_vtr[act_vtr<0] = 0
-        #spatial_ptn[..., count] = act_vtr
-        ##--
-        spatial_ptn[..., count] = z_vtr
+        #-- store spatial pattern
+        act_vtr = train_data[..., 0].copy()
+        act_vtr[act_vtr<0] = 0
+        spatial_ptn[..., count] = act_vtr
+        #--
+        #spatial_ptn[..., count] = z_vtr
         count += 1
         clf = RandomForestClassifier(n_estimators=n_tree,
                                      max_depth=d_tree,
@@ -146,15 +146,16 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
             if i == j:
                 continue
             atlas_idx.append(j)
-            r = normalized_mutual_info_score(spatial_ptn[..., i],
-                                             spatial_ptn[..., j])
+            #r = normalized_mutual_info_score(spatial_ptn[..., i],
+            #                                 spatial_ptn[..., j])
             #r = mymath.mutual_information(spatial_ptn[..., i],
             #                              spatial_ptn[..., j])
-            #r = np.corrcoef(spatial_ptn[..., i], spatial_ptn[..., j])[0, 1]
+            r = np.corrcoef(spatial_ptn[..., i], spatial_ptn[..., j])[0, 1]
             similarity.append(r)
 
         # sort the similarity
         sorted_sim_idx = np.argsort(similarity)[::-1]
+        print sorted_sim_idx
 
         # label the activation voxels with atlas forests (AFs)
         tmp_dice = {}
@@ -248,10 +249,10 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
     # define similarity index
     similarity = []
     for i in range(len(forest_list)):
-        r = normalized_mutual_info_score(spatial_ptn[..., i], z_vtr)
-        #z_vtr = x_mtx[..., 0].copy()
-        #z_vtr[z_vtr<0] = 0
-        #r = np.corrcoef(spatial_ptn[..., i], z_vtr)[0, 1]
+        #r = normalized_mutual_info_score(spatial_ptn[..., i], z_vtr)
+        z_vtr = x_mtx[..., 0].copy()
+        z_vtr[z_vtr<0] = 0
+        r = np.corrcoef(spatial_ptn[..., i], z_vtr)[0, 1]
         similarity.append(r)
 
     # sort the similarity
@@ -327,4 +328,43 @@ def save_dice(dice_dict, out_dir):
             tmp_line = [str(item) for item in line]
             tmp_line = ','.join(tmp_line)
             f.write(tmp_line + '\n')
+
+def get_posterior_map(sid_list, data_dir, class_label, forest_list,
+                      classes_list, spatial_ptn, save_nifti=True):
+    """
+    Get posterior map of each AF.
+
+    """
+    mask_data = np.array(arlib.load_mask_coord(data_dir))
+    for i in range(len(sid_list)):
+        print 'AF from subject %s'%(sid_list[i])
+        # label the voxels within the mask using atlas forests (AFs)
+        clf = forest_list[i]
+        prob = clf.predict_proba(mask_data)
+        std_prob = np.zeros((prob.shape[0], len(class_label)+1))
+        # TODO: construct a std prob table
+        for cls_idx in range(prob.shape[1]):
+            if classes_list[i][cls_idx] == 0:
+                std_prob[..., 0] = prob[..., cls_idx]
+            else:
+                tmp_idx = class_label.index(classes_list[i][cls_idx])
+                std_prob[..., tmp_idx+1] = prob[..., cls_idx]
+        new_prob = np.zeros(std_prob.shape)
+        new_prob[range(new_prob.shape[0]),
+                 np.argmax(std_prob, axis=1)] = 1
+
+        # save posterior map as a nifti file
+        if save_nifti:
+            # predicted nifti directory
+            pred_dir = os.path.join(data_dir, 'posterior_maps')
+            if not os.path.exists(pred_dir):
+                os.system('mkdir ' + pred_dir)
+            fsl_dir = os.getenv('FSL_DIR')
+            img = nib.load(os.path.join(fsl_dir, 'data', 'standard',
+                                        'MNI152_T1_2mm_brain.nii.gz'))
+            # save predicted label
+            header = img.get_header()
+            out_file = os.path.join(pred_dir, sid_list[i]+'_posterior.nii.gz')
+            mybase.save2nifti(new_prob, header, out_file)
+
 

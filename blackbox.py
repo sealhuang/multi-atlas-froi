@@ -59,7 +59,7 @@ def model_training_with_LOOCV_testing():
     db_dir = r'/nfs/t2/BAA/SSR'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'l_code_test')
+    data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ofa_ffa')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -67,9 +67,9 @@ def model_training_with_LOOCV_testing():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [2, 4]
-    atlas_num = [50]
-    #atlas_num = [1, 5] + range(10, 201, 10)
+    class_label = [1, 3]
+    #atlas_num = [50]
+    atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 10)
     #atlas_num = range(1, 201)
 
@@ -84,7 +84,7 @@ def model_training_with_LOOCV_testing():
     forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
     dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
                                     forest_list, classes_list, spatial_ptn,
-                                    save_nifti=True)
+                                    save_nifti=False)
 
     #-- save dice to a file
     model.save_dice(dice, data_dir)
@@ -250,8 +250,8 @@ def model_testing_independent():
                       class_label, forest_list, classes_list, spatial_ptn)
 
 if __name__ == '__main__':
-    #model_training_with_LOOCV_testing()
+    model_training_with_LOOCV_testing()
     #model_testing_independent()
     #model_testing_with_LOOCV_single_atlas()
-    forest_parameter_selection()
+    #forest_parameter_selection()
 

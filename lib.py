@@ -5,7 +5,7 @@ import os
 import nibabel as nib
 import numpy as np
 
-from mypy import base as mybase
+from nipytools import base as ntbase
 
 def ext_sample(zstat_file, mask_coord, class_label, label_file=None):
     """
@@ -81,7 +81,7 @@ def make_mask(label_file_list, class_label, output_dir):
     mask_data[mask_data>0] = 1
     # save to file
     mask_file = os.path.join(output_dir, 'mask.nii.gz')
-    mybase.save2nifti(mask_data, header, mask_file)
+    ntbase.save2nifti(mask_data, header, mask_file)
     # return data
     return mask_data
 

@@ -60,17 +60,17 @@ plot_dir = os.path.join(ma_dir, 'plot')
 #fig.colorbar(surf, shrink=0.5, aspect=5)
 #plt.show()
 
-#-- fig. 3 comparison between random and similarity selection
-# load data
-data_file = os.path.join(plot_dir, 'random_50.csv')
-d = np.loadtxt(data_file, delimiter=',')
-# plot
-sns.set(style='whitegrid')
-f, ax = plt.subplots()
-sns.violinplot(d, names=['rOFA', 'rFFA'])
-sns.despine(left=True)
-ax.set_ylim(0.7, 0.87)
-ax.set_ylabel('Dice value')
-ax.plot(1, 0.75, color='cornflowerblue', marker='o', markersize=10)
-ax.plot(2, 0.85, color='cornflowerblue', marker='o', markersize=10)
-plt.show()
+##-- fig. 3 comparison between random and similarity selection
+## load data
+#data_file = os.path.join(plot_dir, 'random_50.csv')
+#d = np.loadtxt(data_file, delimiter=',')
+## plot
+#sns.set(style='whitegrid')
+#f, ax = plt.subplots()
+#sns.violinplot(d, names=['rOFA', 'rFFA'])
+#sns.despine(left=True)
+#ax.set_ylim(0.7, 0.87)
+#ax.set_ylabel('Dice value')
+#ax.plot(1, 0.75, color='cornflowerblue', marker='o', markersize=10)
+#ax.plot(2, 0.85, color='cornflowerblue', marker='o', markersize=10)
+#plt.show()

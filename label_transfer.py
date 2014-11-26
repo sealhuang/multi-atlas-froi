@@ -7,10 +7,10 @@ import numpy as np
 import nibabel as nib
 from sklearn.metrics import normalized_mutual_info_score
 
-from mypy import math as mymath
-from mypy import base as mybase
+from nipytools import math as mymath
+from nipytools import base as mybase
 
-import autoroilib as arlib
+import lib as arlib
 
 base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
 doc_dir = os.path.join(base_dir, 'doc')
@@ -24,16 +24,17 @@ sessid = [line.strip() for line in sessid]
 # load zstat and label file
 zstat_file = os.path.join(data_dir, 'merged_zstat.nii.gz')
 label_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
-mask_file = os.path.join(data_dir, 'mask.nii.gz')
+mask_file = os.path.join(base_dir, 'multi-atlas', 'r_ofa_ffa', 'mask.nii.gz')
 zstat_data = nib.load(zstat_file).get_data()
 label_data = nib.load(label_file).get_data()
 mask_data = nib.load(mask_file).get_data()
-voxel_num = mask_data.shape[0] * mask_data.shape[1] * \
-            mask_data.shape[2]
+mask_shape = mask_data.shape
+voxel_num = mask_shape[0] * mask_shape[1] * mask_shape[2]
 mask_vtr = mask_data.reshape(voxel_num)
 mask_vtr = mask_vtr > 0
 
-selected_num = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]
+selected_num = [1, 5] + range(10, 201, 10)
+cls_list = [0, 1, 3]
 
 ffa_dice = []
 ofa_dice = []
@@ -45,9 +46,11 @@ for i in range(len(sessid)):
     test_label = label_data[..., i].copy()
     test_label = test_label * mask_data
     # calculate similarity
+    test_vtr = test_data.copy()
+    test_vtr[test_vtr<0] = 0
+    test_vtr = test_vtr.reshape(voxel_num)
     test_data[test_data<2.3] = 0
     test_data[test_data>0] = 1
-    test_vtr = test_data.reshape(voxel_num)
     similarity = []
     atlas_idx = []
     for j in range(len(sessid)):
@@ -55,17 +58,17 @@ for i in range(len(sessid)):
             continue
         atlas_idx.append(j)
         temp_data = zstat_data[..., j].copy()
-        temp_data[temp_data<2.3] = 0
-        temp_data[temp_data>0] = 1
+        temp_data[temp_data<0] = 0
         temp_vtr = temp_data.reshape(voxel_num)
-        s = normalized_mutual_info_score(test_vtr[mask_vtr],
-                                         temp_vtr[mask_vtr])
+        #s = normalized_mutual_info_score(test_vtr[mask_vtr],
+        #                                 temp_vtr[mask_vtr])
+        s = np.corrcoef(test_vtr[mask_vtr], temp_vtr[mask_vtr])[0, 1]
         similarity.append(s)
 
     # sort the similarity and get n atlases
     sorted_sim_idx = np.argsort(similarity)[::-1]
 
-    cls_list = [0 ,1 ,3]
+    cls_list = [0, 1 ,3]
     temp_ffa_dice = []
     temp_ofa_dice = []
     for num in selected_num:
