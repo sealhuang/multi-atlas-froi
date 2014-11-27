@@ -97,7 +97,8 @@ def train(sid_list, data_dir, n_tree=30, d_tree=20):
         z_vtr[z_vtr>0] = 1
         # mask out voxels which are not activated significantly
         smp_mask = z_vtr > 0
-        train_x = train_data[smp_mask, 0:4]
+        #train_x = train_data[smp_mask, 0:4]
+        train_x = train_data[smp_mask, 1:4]
         train_y = train_data[smp_mask, -1]
         # save activation pattern
         if not isinstance(spatial_ptn, np.ndarray):
@@ -136,7 +137,8 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
         test_data = get_subj_sample(sid_list[i], data_dir)
         # mask out voxels which are not activated significantly
         smp_mask = test_data[..., 0] >= 2.3
-        test_x = test_data[smp_mask, 0:4]
+        #test_x = test_data[smp_mask, 0:4]
+        test_x = test_data[smp_mask, 1:4]
         test_y = test_data[smp_mask, -1]
         
         # define similarity index
@@ -155,7 +157,7 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
 
         # sort the similarity
         sorted_sim_idx = np.argsort(similarity)[::-1]
-        print sorted_sim_idx
+        #print sorted_sim_idx
 
         # label the activation voxels with atlas forests (AFs)
         tmp_dice = {}
@@ -244,7 +246,8 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
     z_vtr[z_vtr<2.3] = 0
     z_vtr[z_vtr>0] = 1
     smp_mask = z_vtr > 0
-    test_x = x_mtx[smp_mask, 0:4]
+    #test_x = x_mtx[smp_mask, 0:4]
+    test_x = x_mtx[smp_mask, 1:4]
         
     # define similarity index
     similarity = []
@@ -340,7 +343,7 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
         print 'AF from subject %s'%(sid_list[i])
         # label the voxels within the mask using atlas forests (AFs)
         clf = forest_list[i]
-        prob = clf.predict_proba(mask_data)
+        prob = clf.predict_proba(mask_data[..., 1:4])
         std_prob = np.zeros((prob.shape[0], len(class_label)+1))
         # TODO: construct a std prob table
         for cls_idx in range(prob.shape[1]):
