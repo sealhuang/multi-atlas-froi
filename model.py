@@ -377,4 +377,11 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
             out_file = os.path.join(pred_dir, sid_list[i]+'_posterior.nii.gz')
             mybase.save2nifti(pred_data, header, out_file)
 
+    merged_file = os.path.join(pred_dir, 'merged_posterior.nii.gz')
+    str_cmd = ['fslmerge', '-a', merged_file]
+    for subj in sid_list:
+        temp = os.path.join(pred_dir, subj + '_posterior.nii.gz')
+        str_cmd.append(temp)
+    os.system(' '.join(str_cmd))
+
 
