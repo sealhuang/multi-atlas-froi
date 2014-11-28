@@ -343,7 +343,7 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
         print 'AF from subject %s'%(sid_list[i])
         # label the voxels within the mask using atlas forests (AFs)
         clf = forest_list[i]
-        prob = clf.predict_proba(mask_data[..., 1:4])
+        prob = clf.predict_proba(mask_data)
         std_prob = np.zeros((prob.shape[0], len(class_label)+1))
         # TODO: construct a std prob table
         for cls_idx in range(prob.shape[1]):
@@ -355,6 +355,10 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
         new_prob = np.zeros(std_prob.shape)
         new_prob[range(new_prob.shape[0]),
                  np.argmax(std_prob, axis=1)] = 1
+        tmp_pred_y = np.argmax(new_prob, axis=1)
+        pred_y = np.zeros(tmp_pred_y.shape)
+        for k in range(1, new_prob.shape[1]):
+            pred_y[tmp_pred_y==k] = class_label[k-1]
 
         # save posterior map as a nifti file
         if save_nifti:
@@ -367,7 +371,10 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
                                         'MNI152_T1_2mm_brain.nii.gz'))
             # save predicted label
             header = img.get_header()
+            coords = mask_data
+            pred_data = arlib.write2array(coords, pred_y)
+            pred_data = np.around(pred_data)
             out_file = os.path.join(pred_dir, sid_list[i]+'_posterior.nii.gz')
-            mybase.save2nifti(new_prob, header, out_file)
+            mybase.save2nifti(pred_data, header, out_file)
 
 

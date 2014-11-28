@@ -249,9 +249,35 @@ def model_testing_independent():
         model.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
                       class_label, forest_list, classes_list, spatial_ptn)
 
+def get_af_posterior():
+    """
+    Get posterior estimate of each AF.
+
+    """
+    print 'Training model and generate posterior for each atlas ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ofa_ffa')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    #-- parameter config
+    class_label = [1, 3]
+
+    #-- model training and testing
+    forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+    model.get_posterior_map(sessid, data_dir, class_label, forest_list,
+                            classes_list, spatial_ptn, save_nifti=True)
+
 if __name__ == '__main__':
-    model_training_with_LOOCV_testing()
+    #model_training_with_LOOCV_testing()
     #model_testing_independent()
     #model_testing_with_LOOCV_single_atlas()
     #forest_parameter_selection()
+    get_af_posterior()
 
