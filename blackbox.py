@@ -59,7 +59,7 @@ def model_training_with_LOOCV_testing():
     db_dir = r'/nfs/t2/BAA/SSR'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ofa_ffa')
+    data_dir = os.path.join(base_dir, 'multi-atlas', 'l_sts')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -67,7 +67,7 @@ def model_training_with_LOOCV_testing():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [1, 3]
+    class_label = [8, 10, 12]
     #atlas_num = [50]
     atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 10)
@@ -275,9 +275,9 @@ def get_af_posterior():
                             classes_list, spatial_ptn, save_nifti=True)
 
 if __name__ == '__main__':
-    #model_training_with_LOOCV_testing()
+    model_training_with_LOOCV_testing()
     #model_testing_independent()
     #model_testing_with_LOOCV_single_atlas()
     #forest_parameter_selection()
-    get_af_posterior()
+    #get_af_posterior()
 

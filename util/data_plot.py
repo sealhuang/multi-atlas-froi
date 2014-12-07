@@ -13,6 +13,19 @@ base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
 ma_dir = os.path.join(base_dir, 'multi-atlas')
 plot_dir = os.path.join(ma_dir, 'plot')
 
+#-- fig. 1 relation between atlas rank and its dice accuracy
+# load data
+roi_name = 'rasts'
+data_file = os.path.join(plot_dir, 'atlas_rank', roi_name + '_atlas_rank.csv')
+data = np.loadtxt(data_file, delimiter=',')
+fig, ax = plt.subplots()
+ax.plot(np.arange(1, 201, 1), data, 'o', markersize=5)
+ax.set_xlim(0, 210)
+ax.set_title('right aSTS')
+ax.set_xlabel('Rank of atlas')
+ax.set_ylabel('Dice overlap')
+plt.show()
+
 ##-- fig. 1 effect of atlas selection and number of selected atlas
 ## load data
 #rand_rofa_file = os.path.join(plot_dir, 'rand_rofa.csv')
