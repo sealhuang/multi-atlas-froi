@@ -240,3 +240,23 @@ for line in out_data:
 #    cmd_str.append(temp)
 #os.system(' '.join(cmd_str))
 
+##-- compute mean dice for random selection approach
+#roi_list = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
+#
+#base_dir = r'/nfs/j3/userhome/huanglijie'
+#data_dir = os.path.join(base_dir, 'random_data')
+#f_list = os.listdir(data_dir)
+#f_list = [line.split('.') for line in f_list]
+#
+#for idx in roi_list:
+#    out_file = os.path.join(base_dir, 'mean_' + str(idx) + '.csv')
+#    f = open(out_file, 'wb')
+#    file_header = 'label_' + str(idx)
+#    for item in f_list:
+#        if file_header in item:
+#            data = np.loadtxt('.'.join(item), delimiter=',')
+#            m = data.mean(axis=0)
+#            f.write(','.join([str(num) for num in m])+'\n')
+#        else:
+#            continue
+
