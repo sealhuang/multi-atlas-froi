@@ -87,7 +87,7 @@ def model_training_with_LOOCV_testing():
                                     save_nifti=True)
 
     #-- save dice to a file
-    #model.save_dice(dice, data_dir)
+    model.save_dice(dice, data_dir)
 
 def model_testing_with_LOOCV_random():
     """
