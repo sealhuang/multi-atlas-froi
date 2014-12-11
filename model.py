@@ -310,7 +310,8 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
                                         'MNI152_T1_2mm_brain.nii.gz'))
             # save predicted label
             header = img.get_header()
-            coords = test_x[..., 1:4]
+            #coords = test_x[..., 1:4]
+            coords = test_x
             pred_data = arlib.write2array(coords, pred_y)
             pred_data = np.around(pred_data)
             out_file = os.path.join(out_dir, out_name)

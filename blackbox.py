@@ -213,7 +213,7 @@ def model_testing_independent():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'r_code_test')
+    data_dir = os.path.join(base_dir, 'multi-atlas', 'l_sts')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -221,8 +221,8 @@ def model_testing_independent():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [1, 3]
-    atlas_num = [50]
+    class_label = [8, 10, 12]
+    atlas_num = [40]
     #atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 201)
 
@@ -233,17 +233,15 @@ def model_testing_independent():
     mask_coords = lib.load_mask_coord(data_dir)
 
     #-- load testing dataset
-    test_dir = r'/nfs/t2/fmricenter/obj_reliability/func'
-    pred_dir = os.path.join(base_dir, 'multi-atlas', 'reliability',
-                            'l_predicted_files')
-    test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'reliability',
-                                    'sessid')
+    test_dir = r'/nfs/h1/workingshop/huanglijie/autoroi/multi-atlas/group08'
+    loc_dir = os.path.join(test_dir, 'localizer')
+    pred_dir = os.path.join(test_dir, 'predicted_files', 'l_sts')
+    test_sessid_file = os.path.join(test_dir, 'sessid')
     test_sessid = open(test_sessid_file).readlines()
     test_sessid = [line.strip() for line in test_sessid]
     
     for subj in test_sessid:
-        zstat_file = os.path.join(test_dir, subj, 'obj.gfeat', 'cope1.feat',
-                                  'stats', 'zstat1.nii.gz')
+        zstat_file = os.path.join(loc_dir, subj + '_face_obj_zstat.nii.gz')
         feature_name, sample_data = lib.ext_sample(zstat_file, mask_coords,
                                                    class_label)
         model.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
@@ -275,8 +273,8 @@ def get_af_posterior():
                             classes_list, spatial_ptn, save_nifti=True)
 
 if __name__ == '__main__':
-    model_training_with_LOOCV_testing()
-    #model_testing_independent()
+    #model_training_with_LOOCV_testing()
+    model_testing_independent()
     #model_testing_with_LOOCV_single_atlas()
     #forest_parameter_selection()
     #get_af_posterior()

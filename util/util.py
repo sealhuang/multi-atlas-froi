@@ -14,15 +14,15 @@ ma_dir = os.path.join(base_dir, 'multi-atlas')
 gcss_dir = os.path.join(base_dir, 'gcss')
 group08_dir = os.path.join(ma_dir, 'group08')
 
-# read all subjects' SID from group 06
-sessid_file = os.path.join(doc_dir, 'sessid')
-sessid = open(sessid_file).readlines()
-sessid = [line.strip() for line in sessid]
-
-## read all subjects' SID from group 08
-#sessid_file = os.path.join(group08_dir, 'sessid')
+## read all subjects' SID from group 06
+#sessid_file = os.path.join(doc_dir, 'sessid')
 #sessid = open(sessid_file).readlines()
 #sessid = [line.strip() for line in sessid]
+
+# read all subjects' SID from group 08
+sessid_file = os.path.join(group08_dir, 'sessid')
+sessid = open(sessid_file).readlines()
+sessid = [line.strip() for line in sessid]
 
 ##-- ROI stats
 ## load label data
@@ -181,52 +181,46 @@ sessid = [line.strip() for line in sessid]
 #                        ts_data[..., new_idx[roi_idx[roi[1]]-1]])[0, 1]
 #        print subj, r
 
-##-- extract beta value for each subject
-#roi_label = [1, 2, 3, 4]
-#roi_name = ['rOFA', 'lOFA', 'rFFA', 'lFFA']
-##merged_pred = os.path.join(data_dir, 'merged_true_label.nii.gz')
-##merged_pred = os.path.join(ma_dir, 'predicted_files', 'merged_pred.nii.gz')
-##merged_pred = os.path.join(gcss_dir, 'merged_pred.nii.gz')
-##merged_pred = os.path.join(group08_dir, 'predicted_files', 'merged_pred.nii.gz')
-#merged_cope = os.path.join(group08_dir, 'merged_face_cope.nii.gz')
-##merged_cope = os.path.join(data_dir, 'merged_zstat.nii.gz')
-#out_file = r'face_cope_gss.log'
-#
-## load data
-##pred_data = np.around(nib.load(merged_pred).get_data())
-#cope_data = nib.load(merged_cope).get_data()
-#
-#out_data = []
-#
-#for i in range(len(sessid)):
-#    # peak roi file
-#    #pred_file = os.path.join(data_dir, 'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    #pred_file = os.path.join(ma_dir, 'predicted_files',
-#    #                         'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    #pred_file = os.path.join(group08_dir, 'predicted_files',
-#    #                         'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    pred_file = os.path.join(group08_dir, 'gss',
-#                             'peak_mask_1', sessid[i]+'_atlas.nii.gz')
-#    pred_data = np.around(nib.load(pred_file).get_data())
-#    temp_data = []
-#    for roi in roi_label:
-#        #mask = pred_data[..., i].copy()
-#        mask = pred_data.copy()
-#        mask[mask!=roi] = 0
-#        mask[mask==roi] = 1
-#        if mask.sum():
-#            masked_cope = mask * cope_data[..., i]
-#            m = masked_cope.sum() / mask.sum()
-#            temp_data.append(m)
-#        else:
-#            temp_data.append(0)
-#    out_data.append(temp_data)
-#
-#f = open(out_file, 'w')
-#f.write(','.join(roi_name)+'\n')
-#for line in out_data:
-#    temp = [str(item) for item in line]
-#    f.write(','.join(temp)+'\n')
+#-- extract beta value for each subject
+roi_label = [8, 10, 12]
+#roi_label = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
+roi_name = ['lpcSTS', 'lpSTS', 'laSTS']
+#roi_name = ['rOFA', 'lOFA', 'rFFA', 'lFFA', 'rpcSTS', 'lpcSTS', 'rpSTS',
+#            'lpSTS', 'raSTS', 'laSTS']
+#merged_pred = os.path.join(group08_dir, 'merged_gss_pred.nii.gz')
+pred_dir = os.path.join(group08_dir, 'predicted_files', 'l_sts')
+merged_cope = os.path.join(group08_dir, 'merged_face_cope.nii.gz')
+#merged_cope = os.path.join(data_dir, 'merged_zstat.nii.gz')
+out_file = r'face_cope_ma.log'
+
+# load data
+#pred_data = np.around(nib.load(merged_pred).get_data())
+cope_data = nib.load(merged_cope).get_data()
+
+out_data = []
+
+for i in range(len(sessid)):
+    pred_file = os.path.join(pred_dir, sessid[i] + '_pred.nii.gz')
+    pred_data = np.around(nib.load(pred_file).get_data())
+    temp_data = []
+    for roi in roi_label:
+        #mask = pred_data[..., i].copy()
+        mask = pred_data.copy()
+        mask[mask!=roi] = 0
+        mask[mask==roi] = 1
+        if mask.sum():
+            masked_cope = mask * cope_data[..., i]
+            m = masked_cope.sum() / mask.sum()
+            temp_data.append(m)
+        else:
+            temp_data.append(0)
+    out_data.append(temp_data)
+
+f = open(out_file, 'w')
+f.write(','.join(roi_name)+'\n')
+for line in out_data:
+    temp = [str(item) for item in line]
+    f.write(','.join(temp)+'\n')
 
 ##-- copy data from 08 group
 #src_dir = r'/nfs/h1/workingshop/huanglijie/fmri/face_feat_08'
@@ -258,25 +252,25 @@ sessid = [line.strip() for line in sessid]
 #    cmd_str.append(temp)
 #os.system(' '.join(cmd_str))
 
-#-- compute mean dice for random selection approach
-roi_list = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
-
-base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi/multi-atlas'
-data_dir = os.path.join(base_dir, 'plot', 'random_select_40')
-f_list = os.listdir(data_dir)
-f_list = [line.split('.') for line in f_list]
-
-for idx in roi_list:
-    out_file = os.path.join(base_dir, 'mean_' + str(idx) + '.csv')
-    f = open(out_file, 'wb')
-    file_header = 'label_' + str(idx)
-    for item in f_list:
-        if file_header in item:
-            data = np.loadtxt(os.path.join(data_dir, '.'.join(item)),
-                              delimiter=',')
-            m = data.mean(axis=0)
-            #f.write(','.join([str(num) for num in m])+'\n')
-            f.write(str(m)+'\n')
-        else:
-            continue
+##-- compute mean dice for random selection approach
+#roi_list = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
+#
+#base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi/multi-atlas'
+#data_dir = os.path.join(base_dir, 'plot', 'random_select_40')
+#f_list = os.listdir(data_dir)
+#f_list = [line.split('.') for line in f_list]
+#
+#for idx in roi_list:
+#    out_file = os.path.join(base_dir, 'mean_' + str(idx) + '.csv')
+#    f = open(out_file, 'wb')
+#    file_header = 'label_' + str(idx)
+#    for item in f_list:
+#        if file_header in item:
+#            data = np.loadtxt(os.path.join(data_dir, '.'.join(item)),
+#                              delimiter=',')
+#            m = data.mean(axis=0)
+#            #f.write(','.join([str(num) for num in m])+'\n')
+#            f.write(str(m)+'\n')
+#        else:
+#            continue
 
