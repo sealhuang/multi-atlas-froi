@@ -10,37 +10,59 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
 base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
-ma_dir = os.path.join(base_dir, 'multi-atlas')
+ma_dir = os.path.join(base_dir, 'ma_202')
 plot_dir = os.path.join(ma_dir, 'plot')
 
 ##-- fig. 1 relation between atlas rank and its dice accuracy
 ## load data
-#roi_name = 'rasts'
-#data_file = os.path.join(plot_dir, 'atlas_rank', roi_name + '_atlas_rank.csv')
+#roi_name = 'rffa'
+#data_file = os.path.join(plot_dir, roi_name + '_atlas_rank.csv')
 #data = np.loadtxt(data_file, delimiter=',')
 #fig, ax = plt.subplots()
-#ax.plot(np.arange(1, 201, 1), data, 'o', markersize=5)
+#ax.plot(np.arange(1, 202, 1), data, 'o', markersize=5)
 #ax.set_xlim(0, 210)
-#ax.set_title('right aSTS')
+#ax.set_title('right FFA')
 #ax.set_xlabel('Rank of atlas')
 #ax.set_ylabel('Dice overlap')
 #plt.show()
 
 ##-- fig. 2 effect of atlas selection and number of selected atlas
 ## load data
-#roi_name = 'lofa'
-#data_file = os.path.join(plot_dir, 'atlas_selection', roi_name + '_comp.csv')
+#roi_name = 'raverage'
+#data_file = os.path.join(plot_dir, roi_name + '_comp.csv')
 #data = np.loadtxt(data_file, delimiter=',')
 ## plot
-#fig, ax=plt.subplots()
-#plt.plot(data[0, :], data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
-#plt.plot(data[0, :], data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#fig, ax=plt.subplots(figsize=(8, 4))
+#plt.plot(data[0, :], data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue',
+#         label='similarity selection')
+#plt.plot(data[0, :], data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green',
+#         label='random selection')
+#plt.legend(loc=4)
 #ax.set_xlim(0, 210)
-##ax.set_ylim(0.4, 0.75)
-#ax.set_title('left OFA')
+#ax.set_ylim(0.55, 0.85)
+#ax.set_title('Average')
 #ax.set_xlabel('Number fused')
 #ax.set_ylabel('Dice overlap')
 #plt.show()
+
+#-- fig. 2 effect of atlas selection and number of selected atlas (NMI)
+# load data
+roi_name = 'nmi'
+data_file = os.path.join(plot_dir, roi_name + '_comp.csv')
+data = np.loadtxt(data_file, delimiter=',')
+# plot
+fig, ax=plt.subplots(figsize=(8, 4))
+plt.plot(data[0, :], data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue',
+         label='rOFA')
+plt.plot(data[0, :], data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green',
+         label='rFFA')
+plt.legend(loc=4)
+ax.set_xlim(0, 210)
+ax.set_ylim(0.55, 0.9)
+ax.set_title('Similarity selection based on NMI')
+ax.set_xlabel('Number fused')
+ax.set_ylabel('Dice overlap')
+plt.show()
 
 ##-- fig. 2 effect of forest parameter
 ## load data
@@ -67,9 +89,9 @@ plot_dir = os.path.join(ma_dir, 'plot')
 
 ##-- fig. 3 comparison between random and similarity selection
 ## load data
-#rand_data = np.zeros((500, 10))
-#label_idx = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
-#for i in range(10):
+#rand_data = np.zeros((500, 2))
+#label_idx = [1, 3]
+#for i in range(2):
 #    data_file = os.path.join(plot_dir, 'random_select_40',
 #                             'mean_' + str(label_idx[i]) + '.csv')
 #    d = np.loadtxt(data_file, delimiter=',')
@@ -77,46 +99,82 @@ plot_dir = os.path.join(ma_dir, 'plot')
 ##-- violinplot
 #sns.set(style='whitegrid')
 #f, ax = plt.subplots()
-#sns.violinplot(rand_data, names=['rOFA', 'lOFA', 'rFFA', 'lFFA', 'rpcSTS',
-#                                 'lpcSTS', 'rpSTS', 'lpSTS', 'raSTS', 'laSTS'])
+#sns.violinplot(rand_data, names=['rOFA', 'rFFA'])
 #sns.despine(left=True)
 ##ax.set_ylim(0, 0.9)
 #ax.set_ylabel('Dice value')
-#ma_dice = [0.753, 0.650, 0.867, 0.779, 0.598, 0.481, 0.833, 0.782, 0.693, 0.662]
+#ma_dice = [0.752, 0.867]
 ##ax.plot(range(1, 11), ma_dice, color='cornflowerblue', marker='o',
 ##        markersize=5)
-#ax.plot(range(1, 11), ma_dice, 'o', color='cornflowerblue', markersize=7)
+#ax.plot(range(1, 3), ma_dice, 'o', color='cornflowerblue', markersize=7)
 ##ax.plot(2, 0.85, color='cornflowerblue', marker='o', markersize=10)
 #plt.show()
+
+##-- boxplot
+#labels = ['rOFA', 'lOFA', 'rFFA', 'lFFA', 'rpcSTS', 'lpcSTS', 'rpSTS',
+#          'lpSTS', 'raSTS', 'laSTS']
+#fig, ax = plt.subplots()
+#ax.boxplot(rand_data)
+#plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], labels)
+#ax.set_ylabel('Dice overlap')
+#plt.show()
+
+##-- fig. 4 compare method using AF and direct label transfer
+## load data
+#data_file = os.path.join(plot_dir, 'af_ooc.csv')
+#data = np.loadtxt(data_file, delimiter=',')
+#print data.shape
+## plot
+#x_idx = [1, 5] + range(10, 201, 10)
+#fig, ax=plt.subplots(nrows=2, ncols=1, figsize=(6,6))
+#ax[0].plot(x_idx, data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
+#ax[0].plot(x_idx, data[0, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#ax[0].set_xlim(0, 210)
+#ax[0].set_title('right OFA')
+#ax[0].set_ylabel('Dice overlap')
 #
-###-- boxplot
-##labels = ['rOFA', 'lOFA', 'rFFA', 'lFFA', 'rpcSTS', 'lpcSTS', 'rpSTS',
-##          'lpSTS', 'raSTS', 'laSTS']
-##fig, ax = plt.subplots()
-##ax.boxplot(rand_data)
-##plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], labels)
-##ax.set_ylabel('Dice overlap')
-##plt.show()
+#ax[1].plot(x_idx, data[3, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
+#ax[1].plot(x_idx, data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#ax[1].set_title('right FFA')
+#ax[1].set_xlim(0, 210)
+#ax[1].set_xlabel('Number fused')
+#ax[1].set_ylabel('Dice overlap')
+#plt.show()
 
-#-- fig. 4 compare method using AF and direct label transfer
-# load data
-data_file = os.path.join(plot_dir, 'af_ooc.csv')
-data = np.loadtxt(data_file, delimiter=',')
-print data.shape
-# plot
-x_idx = [1, 5] + range(10, 201, 10)
-fig, ax=plt.subplots(nrows=2, ncols=1, figsize=(6,6))
-ax[0].plot(x_idx, data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
-ax[0].plot(x_idx, data[0, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
-ax[0].set_xlim(0, 210)
-ax[0].set_title('right OFA')
-ax[0].set_ylabel('Dice overlap')
-
-ax[1].plot(x_idx, data[3, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
-ax[1].plot(x_idx, data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
-ax[1].set_title('right FFA')
-ax[1].set_xlim(0, 210)
-ax[1].set_xlabel('Number fused')
-ax[1].set_ylabel('Dice overlap')
-plt.show()
+##-- fig. 5 varying number of atlases selected
+## load data
+#data_file = os.path.join(plot_dir, 'atlas_number.csv')
+#data = np.loadtxt(data_file, delimiter=',')
+#print data.shape
+## plot
+#x_idx = [1, 5] + range(10, 201, 10)
+##fig, ax=plt.subplots(nrows=1, ncols=1, figsize=(6,6))
+#fig, ax=plt.subplots(figsize=(10, 5))
+#ax.plot(x_idx, data[4, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
+#ax.plot(x_idx, data[5, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#ax.set_xlim(0, 210)
+#ax.set_xlabel('Number fused')
+#ax.set_title('average')
+#ax.set_ylabel('Dice overlap')
+#
+#ax[0].plot(x_idx, data[0, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
+#ax[0].plot(x_idx, data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#ax[0].set_xlim(0, 210)
+#ax[0].set_title('right OFA')
+#ax[0].set_ylabel('Dice overlap')
+#
+#ax[1].plot(x_idx, data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
+#ax[1].plot(x_idx, data[3, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#ax[1].set_title('right FFA')
+#ax[1].set_xlim(0, 210)
+#ax[1].set_xlabel('Number fused')
+#ax[1].set_ylabel('Dice overlap')
+#
+#ax[2].plot(x_idx, data[4, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue')
+#ax[2].plot(x_idx, data[5, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green')
+#ax[2].set_title('average')
+#ax[2].set_xlim(0, 210)
+#ax[2].set_xlabel('Number fused')
+#ax[2].set_ylabel('Dice overlap')
+#plt.show()
 

@@ -335,7 +335,8 @@ def save_dice(dice_dict, out_dir):
             f.write(tmp_line + '\n')
 
 def get_posterior_map(sid_list, data_dir, class_label, forest_list,
-                      classes_list, spatial_ptn, save_nifti=True):
+                      classes_list, spatial_ptn, save_nifti=True,
+                      probabilistic=True):
     """
     Get posterior map of each AF.
 
@@ -354,13 +355,14 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
             else:
                 tmp_idx = class_label.index(classes_list[i][cls_idx])
                 std_prob[..., tmp_idx+1] = prob[..., cls_idx]
-        #new_prob = np.zeros(std_prob.shape)
-        #new_prob[range(new_prob.shape[0]),
-        #         np.argmax(std_prob, axis=1)] = 1
-        #tmp_pred_y = np.argmax(new_prob, axis=1)
-        #pred_y = np.zeros(tmp_pred_y.shape)
-        #for k in range(1, new_prob.shape[1]):
-        #    pred_y[tmp_pred_y==k] = class_label[k-1]
+        # generate final labeling
+        new_prob = np.zeros(std_prob.shape)
+        new_prob[range(new_prob.shape[0]),
+                 np.argmax(std_prob, axis=1)] = 1
+        tmp_pred_y = np.argmax(new_prob, axis=1)
+        pred_y = np.zeros(tmp_pred_y.shape)
+        for k in range(1, new_prob.shape[1]):
+            pred_y[tmp_pred_y==k] = class_label[k-1]
 
         # save posterior map as a nifti file
         if save_nifti:
@@ -376,18 +378,24 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
             coords = mask_data
             #pred_data = arlib.write2array(coords, pred_y)
             #pred_data = np.around(pred_data)
-            pred_data = np.zeros((91, 109, 91, len(class_label)+1))
-            for j in range(len(class_label)+1):
-                pred_data[..., j] = np.copy(arlib.write2array(coords,
-                                                            std_prob[..., j]))
-            out_file = os.path.join(pred_dir, sid_list[i]+'_posterior.nii.gz')
+            if probabilistic:
+                pred_data = np.zeros((91, 109, 91, len(class_label)+1))
+                for j in range(len(class_label)+1):
+                    pred_data[..., j] = np.copy(arlib.write2array(coords,
+                                                        std_prob[..., j]))
+                out_file = os.path.join(pred_dir,
+                                        sid_list[i]+'_posterior.nii.gz')
+            else:
+                pred_data = np.copy(arlib.write2array(coords, pred_y))
+                out_file = os.path.join(pred_dir, sid_list[i]+'_label.nii.gz')
             mybase.save2nifti(pred_data, header, out_file)
 
-    merged_file = os.path.join(pred_dir, 'merged_posterior.nii.gz')
-    str_cmd = ['fslmerge', '-a', merged_file]
-    for subj in sid_list:
-        temp = os.path.join(pred_dir, subj + '_posterior.nii.gz')
-        str_cmd.append(temp)
-    os.system(' '.join(str_cmd))
+    if not probabilistic:
+        merged_file = os.path.join(pred_dir, 'merged_label.nii.gz')
+        str_cmd = ['fslmerge', '-a', merged_file]
+        for subj in sid_list:
+            temp = os.path.join(pred_dir, subj + '_label.nii.gz')
+            str_cmd.append(temp)
+        os.system(' '.join(str_cmd))
 
 

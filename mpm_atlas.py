@@ -2,7 +2,6 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
 import os
-import time
 import numpy as np
 import nibabel as nib
 from sklearn.metrics import normalized_mutual_info_score
@@ -36,10 +35,11 @@ mask_vtr = mask_vtr > 0
 
 #selected_num = [1, 5] + range(10, 201, 10)
 selected_num = [40]
-cls_list = [0, 3, 1]
+cls_list = [1, 3]
+thres = 0.1
 
-ffa_dice = []
 ofa_dice = []
+ffa_dice = []
 
 # predict individual label
 for i in range(len(sessid)):
@@ -75,24 +75,26 @@ for i in range(len(sessid)):
     for num in selected_num:
         print 'selected atlas number %s'%(num)
         selected_atlas = sorted_sim_idx[0:num]
-        pred_prob = np.zeros((91, 109, 91, len(cls_list)))
+        prob_data = np.zeros((91, 109, 91, len(cls_list)+1))
         for idx in selected_atlas:
             temp_label = label_data[..., atlas_idx[idx]]
             for j in range(len(cls_list)):
                 temp = temp_label.copy()
-                temp[temp!=cls_list[j]] = 100
+                temp[temp!=cls_list[j]] = 0
                 temp[temp==cls_list[j]] = 1
-                temp[temp==100] = 0
-                pred_prob[..., j] += temp
-                #pred_prob[..., j] += temp * similarity[idx]
-        pred_label = np.argmax(pred_prob, axis=3)
+                prob_data[..., j+1] += temp
+        prob_data = prob_data / num
+        prob_data[prob_data<thres] = 0
+        mpm = np.argmax(prob_data, axis=3)
         for j in range(len(cls_list)):
-            pred_label[pred_label==j] = cls_list[j]
-        #pred_label[pred_label==2] = 3
-        pred_label = pred_label * mask_data * test_data
+            mpm[mpm==j+1] = cls_list[j]
 
+        ## save MPM file
+        #mybase.save2nifti(mpm, header, os.path.join(data_dir, 'mpm.nii.gz'))
+
+        pred_label = mpm * mask_data * test_data
         # compute Dice
-        for label_idx in cls_list[1:]:
+        for label_idx in cls_list:
             P = pred_label == label_idx
             T = test_label == label_idx
             dice_val = mymath.dice_coef(T, P)
@@ -129,4 +131,5 @@ for line in ofa_dice:
     tmp_line = [str(item) for item in line]
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
+
 

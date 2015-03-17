@@ -4,25 +4,26 @@
 import os
 import numpy as np
 import nibabel as nib
+import re
 
 from nipytools import base as mybase
 
 base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
 doc_dir = os.path.join(base_dir, 'doc')
-data_dir = os.path.join(base_dir, 'data')
-ma_dir = os.path.join(base_dir, 'multi-atlas')
+data_dir = os.path.join(base_dir, 'ma_202', 'data')
+ma_dir = os.path.join(base_dir, 'ma_202')
 gcss_dir = os.path.join(base_dir, 'gcss')
 group08_dir = os.path.join(ma_dir, 'group08')
 
-## read all subjects' SID from group 06
-#sessid_file = os.path.join(doc_dir, 'sessid')
-#sessid = open(sessid_file).readlines()
-#sessid = [line.strip() for line in sessid]
-
-# read all subjects' SID from group 08
-sessid_file = os.path.join(group08_dir, 'sessid')
+# read all subjects' SID from group 06
+sessid_file = os.path.join(doc_dir, 'sessid')
 sessid = open(sessid_file).readlines()
 sessid = [line.strip() for line in sessid]
+
+## read all subjects' SID from group 08
+#sessid_file = os.path.join(group08_dir, 'sessid')
+#sessid = open(sessid_file).readlines()
+#sessid = [line.strip() for line in sessid]
 
 ##-- ROI stats
 ## load label data
@@ -85,6 +86,21 @@ sessid = [line.strip() for line in sessid]
 #    temp = os.path.join(targ_dir, subj + '_pred.nii.gz')
 #    cmd_str.append(temp)
 #os.system(' '.join(cmd_str))
+
+#-- merge zstat file from 06 group
+db_dir = r'/nfs/t2/BAA/SSR'
+merged_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
+cmd_str = ['fslmerge', '-a', merged_file]
+for subj in sessid:
+    #temp = os.path.join(db_dir, subj, 'obj', 'face-object', 'zstat1.nii.gz')
+    subj_dir = os.path.join(db_dir, subj, 'obj', 'face-object')
+    f_list = os.listdir(subj_dir)
+    for f in f_list:
+        if re.search('_ff.nii.gz', f):
+            temp = os.path.join(subj_dir, f)
+            break
+    cmd_str.append(temp)
+os.system(' '.join(cmd_str))
 
 ##-- merge zstat file from 08 group
 #src_dir = os.path.join(group08_dir, 'localizer')
@@ -181,46 +197,46 @@ sessid = [line.strip() for line in sessid]
 #                        ts_data[..., new_idx[roi_idx[roi[1]]-1]])[0, 1]
 #        print subj, r
 
-#-- extract beta value for each subject
-roi_label = [8, 10, 12]
-#roi_label = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
-roi_name = ['lpcSTS', 'lpSTS', 'laSTS']
-#roi_name = ['rOFA', 'lOFA', 'rFFA', 'lFFA', 'rpcSTS', 'lpcSTS', 'rpSTS',
-#            'lpSTS', 'raSTS', 'laSTS']
-#merged_pred = os.path.join(group08_dir, 'merged_gss_pred.nii.gz')
-pred_dir = os.path.join(group08_dir, 'predicted_files', 'l_sts')
-merged_cope = os.path.join(group08_dir, 'merged_face_cope.nii.gz')
-#merged_cope = os.path.join(data_dir, 'merged_zstat.nii.gz')
-out_file = r'face_cope_ma.log'
-
-# load data
-#pred_data = np.around(nib.load(merged_pred).get_data())
-cope_data = nib.load(merged_cope).get_data()
-
-out_data = []
-
-for i in range(len(sessid)):
-    pred_file = os.path.join(pred_dir, sessid[i] + '_pred.nii.gz')
-    pred_data = np.around(nib.load(pred_file).get_data())
-    temp_data = []
-    for roi in roi_label:
-        #mask = pred_data[..., i].copy()
-        mask = pred_data.copy()
-        mask[mask!=roi] = 0
-        mask[mask==roi] = 1
-        if mask.sum():
-            masked_cope = mask * cope_data[..., i]
-            m = masked_cope.sum() / mask.sum()
-            temp_data.append(m)
-        else:
-            temp_data.append(0)
-    out_data.append(temp_data)
-
-f = open(out_file, 'w')
-f.write(','.join(roi_name)+'\n')
-for line in out_data:
-    temp = [str(item) for item in line]
-    f.write(','.join(temp)+'\n')
+##-- extract beta value for each subject
+#roi_label = [8, 10, 12]
+##roi_label = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
+#roi_name = ['lpcSTS', 'lpSTS', 'laSTS']
+##roi_name = ['rOFA', 'lOFA', 'rFFA', 'lFFA', 'rpcSTS', 'lpcSTS', 'rpSTS',
+##            'lpSTS', 'raSTS', 'laSTS']
+##merged_pred = os.path.join(group08_dir, 'merged_gss_pred.nii.gz')
+#pred_dir = os.path.join(group08_dir, 'predicted_files', 'l_sts')
+#merged_cope = os.path.join(group08_dir, 'merged_face_cope.nii.gz')
+##merged_cope = os.path.join(data_dir, 'merged_zstat.nii.gz')
+#out_file = r'face_cope_ma.log'
+#
+## load data
+##pred_data = np.around(nib.load(merged_pred).get_data())
+#cope_data = nib.load(merged_cope).get_data()
+#
+#out_data = []
+#
+#for i in range(len(sessid)):
+#    pred_file = os.path.join(pred_dir, sessid[i] + '_pred.nii.gz')
+#    pred_data = np.around(nib.load(pred_file).get_data())
+#    temp_data = []
+#    for roi in roi_label:
+#        #mask = pred_data[..., i].copy()
+#        mask = pred_data.copy()
+#        mask[mask!=roi] = 0
+#        mask[mask==roi] = 1
+#        if mask.sum():
+#            masked_cope = mask * cope_data[..., i]
+#            m = masked_cope.sum() / mask.sum()
+#            temp_data.append(m)
+#        else:
+#            temp_data.append(0)
+#    out_data.append(temp_data)
+#
+#f = open(out_file, 'w')
+#f.write(','.join(roi_name)+'\n')
+#for line in out_data:
+#    temp = [str(item) for item in line]
+#    f.write(','.join(temp)+'\n')
 
 ##-- copy data from 08 group
 #src_dir = r'/nfs/h1/workingshop/huanglijie/fmri/face_feat_08'

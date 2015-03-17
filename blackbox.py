@@ -59,7 +59,7 @@ def model_training_with_LOOCV_testing():
     db_dir = r'/nfs/t2/BAA/SSR'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'multi-atlas', 'r_sts')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_sts')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -68,7 +68,7 @@ def model_training_with_LOOCV_testing():
 
     #-- parameter config
     class_label = [7, 9, 11]
-    atlas_num = [40]
+    atlas_num = [201]
     #atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 10)
     #atlas_num = range(1, 201)
@@ -83,8 +83,8 @@ def model_training_with_LOOCV_testing():
     #-- model training
     forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
     dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-                                    forest_list, classes_list, spatial_ptn,
-                                    save_nifti=True)
+                                    forest_list, classes_list, spatial_ptn)
+                                    #save_nifti=True)
 
     #-- save dice to a file
     model.save_dice(dice, data_dir)
@@ -180,7 +180,7 @@ def model_testing_with_LOOCV_single_atlas():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'l_code_test')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_fc')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -188,10 +188,10 @@ def model_testing_with_LOOCV_single_atlas():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [2, 4]
+    class_label = [1, 3]
     #atlas_num = [50]
     #atlas_num = [1, 5] + range(10, 201, 10)
-    atlas_num = range(1, 201)
+    atlas_num = range(1, 202)
     #iter_num = 50
 
     #-- model training and testing
@@ -257,7 +257,7 @@ def get_af_posterior():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ofa_ffa')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_fc')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -270,7 +270,8 @@ def get_af_posterior():
     #-- model training and testing
     forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
     model.get_posterior_map(sessid, data_dir, class_label, forest_list,
-                            classes_list, spatial_ptn, save_nifti=True)
+                            classes_list, spatial_ptn, save_nifti=True,
+                            probabilistic=False)
 
 if __name__ == '__main__':
     #model_training_with_LOOCV_testing()
