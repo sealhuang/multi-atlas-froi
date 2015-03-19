@@ -22,7 +22,7 @@ sessid = [line.strip() for line in sessid]
 label_file = os.path.join(data_dir, 'merged_label.nii.gz')
 label_data = nib.load(label_file).get_data()
 
-roi_index = 3
+roi_index = 1
 sim_mtx = []
 
 for i in range(len(sessid)):

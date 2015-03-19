@@ -36,7 +36,7 @@ mask_vtr = mask_vtr > 0
 #selected_num = [1, 5] + range(10, 201, 10)
 selected_num = [40]
 cls_list = [1, 3]
-thres = 0.1
+thres = 0.2
 
 ofa_dice = []
 ffa_dice = []
@@ -105,7 +105,8 @@ for i in range(len(sessid)):
                 temp_ofa_dice.append(dice_val)
         
         # save to nifti file
-        output_dir = os.path.join(base_dir, 'ma_202', 'gss_pred_file', 'r_fc')
+        output_dir = os.path.join(base_dir, 'ma_202', 'gss_pred_file',
+                                  'thresh_02', 'r_fc')
         file_name = os.path.join(output_dir, sessid[i]+'_'+str(num)+'.nii.gz')
         mybase.save2nifti(pred_label, header, file_name)
 
