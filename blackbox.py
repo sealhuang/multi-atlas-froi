@@ -5,6 +5,7 @@ import os
 import time
 import numpy as np
 import re
+import nibabel as nib
 
 import lib
 import model
@@ -48,6 +49,39 @@ def get_label_list(sid_list, db_dir):
         label = get_label_file(subject_dir)
         label_list.append(label)
     return label_list
+
+def extract_mean_overlap():
+    """
+    Calculate mean overlap across subjects for a ROI.
+
+    """
+    #-- directory config
+    db_dir = r'/nfs/t2/BAA/SSR'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    roi_index = 9
+    print 'ROI index: %s'%(roi_index)
+
+    label_file_list = get_label_list(sessid, db_dir)
+
+    new_data = np.zeros((91, 109, 91))
+    for item in label_file_list:
+        data = nib.load(item).get_data()
+        data[data!=roi_index] = 0
+        data[data==roi_index] = 1
+        new_data += data
+    mask = new_data.copy()
+    mask[mask>0] = 1
+    new_data = new_data / len(sessid)
+    print 'Max: %s'%(new_data.max())
+    mean_prob = new_data.sum() / mask.sum()
+    print 'Mean: %s'%(mean_prob)
 
 def model_training_with_LOOCV_testing():
     """
@@ -278,5 +312,6 @@ if __name__ == '__main__':
     #model_testing_independent()
     #model_testing_with_LOOCV_single_atlas()
     #forest_parameter_selection()
-    get_af_posterior()
+    #get_af_posterior()
+    extract_mean_overlap()
 
