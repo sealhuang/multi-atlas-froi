@@ -157,6 +157,7 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
 
         # sort the similarity
         sorted_sim_idx = np.argsort(similarity)[::-1]
+        #print similarity
         #print sorted_sim_idx
 
         # label the activation voxels with atlas forests (AFs)

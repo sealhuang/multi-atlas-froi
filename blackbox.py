@@ -310,8 +310,8 @@ def get_af_posterior():
 if __name__ == '__main__':
     #model_training_with_LOOCV_testing()
     #model_testing_independent()
-    #model_testing_with_LOOCV_single_atlas()
+    model_testing_with_LOOCV_single_atlas()
     #forest_parameter_selection()
     #get_af_posterior()
-    extract_mean_overlap()
+    #extract_mean_overlap()
 
