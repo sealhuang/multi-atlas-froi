@@ -97,7 +97,8 @@ def train(sid_list, data_dir, n_tree=30, d_tree=20):
         z_vtr[z_vtr>0] = 1
         # mask out voxels which are not activated significantly
         smp_mask = z_vtr > 0
-        train_x = train_data[smp_mask, 0:4]
+        #train_x = train_data[smp_mask, 0:4]
+        train_x = train_data[smp_mask, 1:4]
         train_y = train_data[smp_mask, -1]
         # save activation pattern
         if not isinstance(spatial_ptn, np.ndarray):
@@ -136,7 +137,8 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
         test_data = get_subj_sample(sid_list[i], data_dir)
         # mask out voxels which are not activated significantly
         smp_mask = test_data[..., 0] >= 2.3
-        test_x = test_data[smp_mask, 0:4]
+        #test_x = test_data[smp_mask, 0:4]
+        test_x = test_data[smp_mask, 1:4]
         test_y = test_data[smp_mask, -1]
         
         # define similarity index
@@ -155,7 +157,8 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
 
         # sort the similarity
         sorted_sim_idx = np.argsort(similarity)[::-1]
-        print sorted_sim_idx
+        #print similarity
+        #print sorted_sim_idx
 
         # label the activation voxels with atlas forests (AFs)
         tmp_dice = {}
@@ -218,7 +221,8 @@ def leave_one_out_test(sid_list, atlas_num, data_dir, class_label,
                                             'MNI152_T1_2mm_brain.nii.gz'))
                 # save predicted label
                 header = img.get_header()
-                coords = test_x[..., 1:4]
+                #coords = test_x[..., 1:4]
+                coords = test_x
                 pred_data = arlib.write2array(coords, pred_y)
                 pred_data = np.around(pred_data)
                 out_file = os.path.join(pred_dir, sid_list[i]+'_pred.nii.gz')
@@ -244,7 +248,8 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
     z_vtr[z_vtr<2.3] = 0
     z_vtr[z_vtr>0] = 1
     smp_mask = z_vtr > 0
-    test_x = x_mtx[smp_mask, 0:4]
+    #test_x = x_mtx[smp_mask, 0:4]
+    test_x = x_mtx[smp_mask, 1:4]
         
     # define similarity index
     similarity = []
@@ -306,7 +311,8 @@ def predict(x_mtx, atlas_num, out_dir, out_name, class_label,
                                         'MNI152_T1_2mm_brain.nii.gz'))
             # save predicted label
             header = img.get_header()
-            coords = test_x[..., 1:4]
+            #coords = test_x[..., 1:4]
+            coords = test_x
             pred_data = arlib.write2array(coords, pred_y)
             pred_data = np.around(pred_data)
             out_file = os.path.join(out_dir, out_name)
@@ -330,7 +336,8 @@ def save_dice(dice_dict, out_dir):
             f.write(tmp_line + '\n')
 
 def get_posterior_map(sid_list, data_dir, class_label, forest_list,
-                      classes_list, spatial_ptn, save_nifti=True):
+                      classes_list, spatial_ptn, save_nifti=True,
+                      probabilistic=True):
     """
     Get posterior map of each AF.
 
@@ -349,9 +356,14 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
             else:
                 tmp_idx = class_label.index(classes_list[i][cls_idx])
                 std_prob[..., tmp_idx+1] = prob[..., cls_idx]
+        # generate final labeling
         new_prob = np.zeros(std_prob.shape)
         new_prob[range(new_prob.shape[0]),
                  np.argmax(std_prob, axis=1)] = 1
+        tmp_pred_y = np.argmax(new_prob, axis=1)
+        pred_y = np.zeros(tmp_pred_y.shape)
+        for k in range(1, new_prob.shape[1]):
+            pred_y[tmp_pred_y==k] = class_label[k-1]
 
         # save posterior map as a nifti file
         if save_nifti:
@@ -364,7 +376,27 @@ def get_posterior_map(sid_list, data_dir, class_label, forest_list,
                                         'MNI152_T1_2mm_brain.nii.gz'))
             # save predicted label
             header = img.get_header()
-            out_file = os.path.join(pred_dir, sid_list[i]+'_posterior.nii.gz')
-            mybase.save2nifti(new_prob, header, out_file)
+            coords = mask_data
+            #pred_data = arlib.write2array(coords, pred_y)
+            #pred_data = np.around(pred_data)
+            if probabilistic:
+                pred_data = np.zeros((91, 109, 91, len(class_label)+1))
+                for j in range(len(class_label)+1):
+                    pred_data[..., j] = np.copy(arlib.write2array(coords,
+                                                        std_prob[..., j]))
+                out_file = os.path.join(pred_dir,
+                                        sid_list[i]+'_posterior.nii.gz')
+            else:
+                pred_data = np.copy(arlib.write2array(coords, pred_y))
+                out_file = os.path.join(pred_dir, sid_list[i]+'_label.nii.gz')
+            mybase.save2nifti(pred_data, header, out_file)
+
+    if not probabilistic:
+        merged_file = os.path.join(pred_dir, 'merged_label.nii.gz')
+        str_cmd = ['fslmerge', '-a', merged_file]
+        for subj in sid_list:
+            temp = os.path.join(pred_dir, subj + '_label.nii.gz')
+            str_cmd.append(temp)
+        os.system(' '.join(str_cmd))
 
 

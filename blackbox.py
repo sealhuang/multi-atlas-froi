@@ -5,6 +5,7 @@ import os
 import time
 import numpy as np
 import re
+import nibabel as nib
 
 import lib
 import model
@@ -49,6 +50,39 @@ def get_label_list(sid_list, db_dir):
         label_list.append(label)
     return label_list
 
+def extract_mean_overlap():
+    """
+    Calculate mean overlap across subjects for a ROI.
+
+    """
+    #-- directory config
+    db_dir = r'/nfs/t2/BAA/SSR'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    roi_index = 9
+    print 'ROI index: %s'%(roi_index)
+
+    label_file_list = get_label_list(sessid, db_dir)
+
+    new_data = np.zeros((91, 109, 91))
+    for item in label_file_list:
+        data = nib.load(item).get_data()
+        data[data!=roi_index] = 0
+        data[data==roi_index] = 1
+        new_data += data
+    mask = new_data.copy()
+    mask[mask>0] = 1
+    new_data = new_data / len(sessid)
+    print 'Max: %s'%(new_data.max())
+    mean_prob = new_data.sum() / mask.sum()
+    print 'Mean: %s'%(mean_prob)
+
 def model_training_with_LOOCV_testing():
     """
     Training model and test it with leave-one-out cross-validation.
@@ -59,7 +93,7 @@ def model_training_with_LOOCV_testing():
     db_dir = r'/nfs/t2/BAA/SSR'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'multi-atlas', 'r_ofa_ffa')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_sts')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -67,9 +101,9 @@ def model_training_with_LOOCV_testing():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [1, 3]
-    #atlas_num = [50]
-    atlas_num = [1, 5] + range(10, 201, 10)
+    class_label = [7, 9, 11]
+    atlas_num = [201]
+    #atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 10)
     #atlas_num = range(1, 201)
 
@@ -83,8 +117,8 @@ def model_training_with_LOOCV_testing():
     #-- model training
     forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
     dice = model.leave_one_out_test(sessid, atlas_num, data_dir, class_label,
-                                    forest_list, classes_list, spatial_ptn,
-                                    save_nifti=False)
+                                    forest_list, classes_list, spatial_ptn)
+                                    #save_nifti=True)
 
     #-- save dice to a file
     model.save_dice(dice, data_dir)
@@ -180,7 +214,7 @@ def model_testing_with_LOOCV_single_atlas():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'l_code_test')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_fc')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -188,10 +222,10 @@ def model_testing_with_LOOCV_single_atlas():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [2, 4]
+    class_label = [1, 3]
     #atlas_num = [50]
     #atlas_num = [1, 5] + range(10, 201, 10)
-    atlas_num = range(1, 201)
+    atlas_num = range(1, 202)
     #iter_num = 50
 
     #-- model training and testing
@@ -213,7 +247,7 @@ def model_testing_independent():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'r_code_test')
+    data_dir = os.path.join(base_dir, 'multi-atlas', 'l_sts')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -221,8 +255,8 @@ def model_testing_independent():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [1, 3]
-    atlas_num = [50]
+    class_label = [8, 10, 12]
+    atlas_num = [40]
     #atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 201)
 
@@ -233,25 +267,51 @@ def model_testing_independent():
     mask_coords = lib.load_mask_coord(data_dir)
 
     #-- load testing dataset
-    test_dir = r'/nfs/t2/fmricenter/obj_reliability/func'
-    pred_dir = os.path.join(base_dir, 'multi-atlas', 'reliability',
-                            'l_predicted_files')
-    test_sessid_file = os.path.join(base_dir, 'multi-atlas', 'reliability',
-                                    'sessid')
+    test_dir = r'/nfs/h1/workingshop/huanglijie/autoroi/multi-atlas/group08'
+    loc_dir = os.path.join(test_dir, 'localizer')
+    pred_dir = os.path.join(test_dir, 'predicted_files', 'l_sts')
+    test_sessid_file = os.path.join(test_dir, 'sessid')
     test_sessid = open(test_sessid_file).readlines()
     test_sessid = [line.strip() for line in test_sessid]
     
     for subj in test_sessid:
-        zstat_file = os.path.join(test_dir, subj, 'obj.gfeat', 'cope1.feat',
-                                  'stats', 'zstat1.nii.gz')
+        zstat_file = os.path.join(loc_dir, subj + '_face_obj_zstat.nii.gz')
         feature_name, sample_data = lib.ext_sample(zstat_file, mask_coords,
                                                    class_label)
         model.predict(sample_data, atlas_num, pred_dir, subj + '_pred.nii.gz',
                       class_label, forest_list, classes_list, spatial_ptn)
 
+def get_af_posterior():
+    """
+    Get posterior estimate of each AF.
+
+    """
+    print 'Training model and generate posterior for each atlas ...'
+    #-- directory config
+    db_dir = r'/nfs/t2/atlas/database'
+    base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
+    doc_dir = os.path.join(base_dir, 'doc')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_fc')
+
+    #-- laod session ID list for training
+    sessid_file = os.path.join(doc_dir, 'sessid')
+    sessid = open(sessid_file).readlines()
+    sessid = [line.strip() for line in sessid]
+
+    #-- parameter config
+    class_label = [1, 3]
+
+    #-- model training and testing
+    forest_list, classes_list, spatial_ptn = model.train(sessid, data_dir)
+    model.get_posterior_map(sessid, data_dir, class_label, forest_list,
+                            classes_list, spatial_ptn, save_nifti=True,
+                            probabilistic=False)
+
 if __name__ == '__main__':
-    model_training_with_LOOCV_testing()
+    #model_training_with_LOOCV_testing()
     #model_testing_independent()
-    #model_testing_with_LOOCV_single_atlas()
+    model_testing_with_LOOCV_single_atlas()
     #forest_parameter_selection()
+    #get_af_posterior()
+    #extract_mean_overlap()
 
