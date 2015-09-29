@@ -90,13 +90,13 @@ plot_dir = os.path.join(ma_dir, 'plot')
 # fig. x effect of forest parameters
 # load data
 data_dir = os.path.join(plot_dir, 'tree_parameter')
-data_file_1 = os.path.join(data_dir, 'label_8_summary.csv')
-data_file_2 = os.path.join(data_dir, 'label_10_summary.csv')
-data_file_3 = os.path.join(data_dir, 'label_12_summary.csv')
-d1 = np.loadtxt(data_file_1, delimiter=',')
-d2 = np.loadtxt(data_file_2, delimiter=',')
-d3 = np.loadtxt(data_file_3, delimiter=',')
-d = (d1 + d2 + d3) / 3
+label_idx = [1, 2, 3, 4, 7, 8, 9, 10, 11, 12]
+d = np.zeros((7, 7))
+for idx in label_idx:
+    data_file = os.path.join(data_dir, 'label_'+str(idx)+'_summary.csv')
+    dd = np.loadtxt(data_file, delimiter=',')
+    d += dd
+d = d / len(label_idx)
 print 'min: %s'%(d.min())
 print 'max: %s'%(d.max())
 # tick labels
@@ -106,7 +106,9 @@ ticklabels = [str(item) for item in ticklabels]
 fig = plt.figure()
 ax = fig.add_subplot(111)
 #cax = ax.matshow(d, cmap=cm.hot)
-cax = ax.matshow(d, cmap=cm.hot, clim=[0.63, 0.65])
+#cax = ax.matshow(d, cmap=cm.hot, clim=[0.63, 0.65])
+#cax = ax.matshow(d, cmap=cm.coolwarm)
+cax = ax.matshow(d, cmap=cm.coolwarm, clim=[0.702, 0.713])
 fig.colorbar(cax)
 # plot configs
 ax.set_xticklabels(['']+ticklabels)

@@ -106,7 +106,7 @@ def train(sid_list, data_dir, n_tree=30, d_tree=20):
             count = 0
         #-- store spatial pattern
         act_vtr = train_data[..., 0].copy()
-        act_vtr[act_vtr<0] = 0
+        #act_vtr[act_vtr<0] = 0
         spatial_ptn[..., count] = act_vtr
         #--
         #spatial_ptn[..., count] = z_vtr

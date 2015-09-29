@@ -93,7 +93,7 @@ def model_training_with_LOOCV_testing():
     db_dir = r'/nfs/t2/BAA/SSR'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'ma_202', 'r_sts')
+    data_dir = os.path.join(base_dir, 'ma_202', 'r_fc')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -101,8 +101,8 @@ def model_training_with_LOOCV_testing():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [7, 9, 11]
-    atlas_num = [201]
+    class_label = [1, 3]
+    atlas_num = [40]
     #atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 10)
     #atlas_num = range(1, 201)
@@ -308,10 +308,10 @@ def get_af_posterior():
                             probabilistic=False)
 
 if __name__ == '__main__':
-    #model_training_with_LOOCV_testing()
+    model_training_with_LOOCV_testing()
     #model_testing_independent()
     #model_testing_with_LOOCV_single_atlas()
-    forest_parameter_selection()
+    #forest_parameter_selection()
     #get_af_posterior()
     #extract_mean_overlap()
 
