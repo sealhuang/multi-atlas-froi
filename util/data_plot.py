@@ -45,24 +45,24 @@ plot_dir = os.path.join(ma_dir, 'plot')
 #ax.set_ylabel('Dice overlap')
 #plt.show()
 
-#-- fig. 2 effect of atlas selection and number of selected atlas (NMI)
-# load data
-roi_name = 'nmi'
-data_file = os.path.join(plot_dir, roi_name + '_comp.csv')
-data = np.loadtxt(data_file, delimiter=',')
-# plot
-fig, ax=plt.subplots(figsize=(8, 4))
-plt.plot(data[0, :], data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue',
-         label='rOFA')
-plt.plot(data[0, :], data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green',
-         label='rFFA')
-plt.legend(loc=4)
-ax.set_xlim(0, 210)
-ax.set_ylim(0.55, 0.9)
-ax.set_title('Similarity selection based on NMI')
-ax.set_xlabel('Number fused')
-ax.set_ylabel('Dice overlap')
-plt.show()
+##-- fig. 2 effect of atlas selection and number of selected atlas (NMI)
+## load data
+#roi_name = 'nmi'
+#data_file = os.path.join(plot_dir, roi_name + '_comp.csv')
+#data = np.loadtxt(data_file, delimiter=',')
+## plot
+#fig, ax=plt.subplots(figsize=(8, 4))
+#plt.plot(data[0, :], data[1, :], '-o', ms=6, lw=2, alpha=0.7, mfc='blue',
+#         label='rOFA')
+#plt.plot(data[0, :], data[2, :], '-o', ms=6, lw=2, alpha=0.7, mfc='green',
+#         label='rFFA')
+#plt.legend(loc=4)
+#ax.set_xlim(0, 210)
+#ax.set_ylim(0.55, 0.9)
+#ax.set_title('Similarity selection based on NMI')
+#ax.set_xlabel('Number fused')
+#ax.set_ylabel('Dice overlap')
+#plt.show()
 
 ##-- fig. 2 effect of forest parameter
 ## load data
@@ -86,6 +86,36 @@ plt.show()
 #ax.set_zlim3d(0.78, 0.83)
 #fig.colorbar(surf, shrink=0.5, aspect=5)
 #plt.show()
+
+# fig. x effect of forest parameters
+# load data
+data_dir = os.path.join(plot_dir, 'tree_parameter')
+data_file_1 = os.path.join(data_dir, 'label_8_summary.csv')
+data_file_2 = os.path.join(data_dir, 'label_10_summary.csv')
+data_file_3 = os.path.join(data_dir, 'label_12_summary.csv')
+d1 = np.loadtxt(data_file_1, delimiter=',')
+d2 = np.loadtxt(data_file_2, delimiter=',')
+d3 = np.loadtxt(data_file_3, delimiter=',')
+d = (d1 + d2 + d3) / 3
+print 'min: %s'%(d.min())
+print 'max: %s'%(d.max())
+# tick labels
+ticklabels = range(10, 41, 5)
+ticklabels = [str(item) for item in ticklabels]
+# plot
+fig = plt.figure()
+ax = fig.add_subplot(111)
+#cax = ax.matshow(d, cmap=cm.hot)
+cax = ax.matshow(d, cmap=cm.hot, clim=[0.63, 0.65])
+fig.colorbar(cax)
+# plot configs
+ax.set_xticklabels(['']+ticklabels)
+ax.set_yticklabels(['']+ticklabels)
+plt.grid(which='major')
+ax.set_xlabel('max depth of trees')
+ax.xaxis.set_label_position('top')
+ax.set_ylabel('number of trees')
+plt.show()
 
 ##-- fig. 3 comparison between random and similarity selection
 ## load data

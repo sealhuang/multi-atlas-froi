@@ -172,7 +172,7 @@ def forest_parameter_selection():
     db_dir = r'/nfs/t2/atlas/database'
     base_dir = r'/nfs/h1/workingshop/huanglijie/autoroi'
     doc_dir = os.path.join(base_dir, 'doc')
-    data_dir = os.path.join(base_dir, 'r_code_test')
+    data_dir = os.path.join(base_dir, 'ma_202', 'l_sts')
 
     #-- laod session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
@@ -180,13 +180,13 @@ def forest_parameter_selection():
     sessid = [line.strip() for line in sessid]
 
     #-- parameter config
-    class_label = [1, 3]
-    atlas_num = [50]
+    class_label = [8, 10, 12]
+    atlas_num = [40]
     #atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 201)
 
-    tree_num = range(10, 51, 5)
-    tree_depth = range(10, 31, 5)
+    tree_num = range(10, 41, 5)
+    tree_depth = range(10, 41, 5)
 
     for n in tree_num:
         for d in tree_depth:
@@ -216,7 +216,7 @@ def model_testing_with_LOOCV_single_atlas():
     doc_dir = os.path.join(base_dir, 'doc')
     data_dir = os.path.join(base_dir, 'ma_202', 'r_fc')
 
-    #-- laod session ID list for training
+    #-- load session ID list for training
     sessid_file = os.path.join(doc_dir, 'sessid')
     sessid = open(sessid_file).readlines()
     sessid = [line.strip() for line in sessid]
@@ -310,8 +310,8 @@ def get_af_posterior():
 if __name__ == '__main__':
     #model_training_with_LOOCV_testing()
     #model_testing_independent()
-    model_testing_with_LOOCV_single_atlas()
-    #forest_parameter_selection()
+    #model_testing_with_LOOCV_single_atlas()
+    forest_parameter_selection()
     #get_af_posterior()
     #extract_mean_overlap()
 
