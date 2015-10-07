@@ -23,7 +23,7 @@ sessid = [line.strip() for line in sessid]
 # load zstat and label file
 zstat_file = os.path.join(data_dir, 'merged_zstat.nii.gz')
 label_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
-mask_file = os.path.join(base_dir, 'ma_202', 'r_fc', 'mask.nii.gz')
+mask_file = os.path.join(base_dir, 'ma_202', 'l_sts', 'mask.nii.gz')
 zstat_data = nib.load(zstat_file).get_data()
 label_data = nib.load(label_file).get_data()
 mask_data = nib.load(mask_file).get_data()
@@ -35,14 +35,16 @@ mask_vtr = mask_vtr > 0
 
 #selected_num = [1, 5] + range(10, 201, 10)
 selected_num = [40, 201]
-cls_list = [1, 3]
+cls_list = [8, 10, 12]
 thres = 0.2
 
-ofa_dice = []
-ffa_dice = []
+pcsts_dice = []
+psts_dice = []
+asts_dice = []
 
-ofa_peak = []
-ffa_peak = []
+pcsts_peak = []
+psts_peak = []
+asts_peak = []
 
 # predict individual label
 for i in range(len(sessid)):
@@ -73,10 +75,12 @@ for i in range(len(sessid)):
     # sort the similarity and get n atlases
     sorted_sim_idx = np.argsort(similarity)[::-1]
 
-    temp_ffa_dice = []
-    temp_ofa_dice = []
-    temp_ffa_peak = []
-    temp_ofa_peak = []
+    temp_pcsts_dice = []
+    temp_psts_dice = []
+    temp_asts_dice = []
+    temp_pcsts_peak = []
+    temp_psts_peak = []
+    temp_asts_peak = []
     for num in selected_num:
         print 'selected atlas number %s'%(num)
         selected_atlas = sorted_sim_idx[0:num]
@@ -104,10 +108,12 @@ for i in range(len(sessid)):
             T = test_label == label_idx
             dice_val = mymath.dice_coef(T, P)
             print 'Dice for label %s: %f'%(label_idx, dice_val)
-            if label_idx == 3:
-                temp_ffa_dice.append(dice_val)
+            if label_idx == 12:
+                temp_asts_dice.append(dice_val)
+            elif label_idx == 10:
+                temp_psts_dice.append(dice_val)
             else:
-                temp_ofa_dice.append(dice_val)
+                temp_pcsts_dice.append(dice_val)
        
         # compute consistency of peak location
         for label_idx in cls_list:
@@ -124,10 +130,12 @@ for i in range(len(sessid)):
                 c = 0
             else:
                 c = 1
-            if label_idx == 3:
-                temp_ffa_peak.append(c)
+            if label_idx == 12:
+                temp_asts_peak.append(c)
+            elif label_idx == 10:
+                temp_psts_peak.append(c)
             else:
-                temp_ofa_peak.append(c)
+                temp_pcsts_peak.append(c)
 
         ## save to nifti file
         #output_dir = os.path.join(base_dir, 'ma_202', 'gss_pred_file',
@@ -135,47 +143,69 @@ for i in range(len(sessid)):
         #file_name = os.path.join(output_dir, sessid[i]+'_'+str(num)+'.nii.gz')
         #mybase.save2nifti(pred_label, header, file_name)
 
-    ffa_dice.append(temp_ffa_dice)
-    ofa_dice.append(temp_ofa_dice)
-    ffa_peak.append(temp_ffa_peak)
-    ofa_peak.append(temp_ofa_peak)
+    pcsts_dice.append(temp_pcsts_dice)
+    psts_dice.append(temp_psts_dice)
+    asts_dice.append(temp_asts_dice)
+    pcsts_peak.append(temp_pcsts_peak)
+    psts_peak.append(temp_psts_peak)
+    asts_peak.append(temp_asts_peak)
 
-out_file = 'r_ffa_dice_output.txt'
+out_file = 'l_pcsts_dice_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
 f.write(str_line + '\n')
-for line in ffa_dice:
+for line in pcsts_dice:
     tmp_line = [str(item) for item in line]
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
 
-out_file = 'r_ofa_dice_output.txt'
+out_file = 'l_psts_dice_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
 f.write(str_line + '\n')
-for line in ofa_dice:
+for line in psts_dice:
     tmp_line = [str(item) for item in line]
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
 
-out_file = 'r_ffa_peak_output.txt'
+out_file = 'l_asts_dice_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
 f.write(str_line + '\n')
-for line in ffa_peak:
+for line in asts_dice:
     tmp_line = [str(item) for item in line]
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
 
-out_file = 'r_ofa_peak_output.txt'
+out_file = 'l_pcsts_peak_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
 f.write(str_line + '\n')
-for line in ofa_peak:
+for line in pcsts_peak:
+    tmp_line = [str(item) for item in line]
+    tmp_line = ','.join(tmp_line)
+    f.write(tmp_line + '\n')
+
+out_file = 'l_psts_peak_output.txt'
+f = open(out_file, 'w')
+str_line = [str(item) for item in selected_num]
+str_line = ','.join(str_line)
+f.write(str_line + '\n')
+for line in psts_peak:
+    tmp_line = [str(item) for item in line]
+    tmp_line = ','.join(tmp_line)
+    f.write(tmp_line + '\n')
+
+out_file = 'l_asts_peak_output.txt'
+f = open(out_file, 'w')
+str_line = [str(item) for item in selected_num]
+str_line = ','.join(str_line)
+f.write(str_line + '\n')
+for line in asts_peak:
     tmp_line = [str(item) for item in line]
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')

@@ -102,8 +102,8 @@ def model_training_with_LOOCV_testing():
 
     #-- parameter config
     class_label = [1, 3]
-    atlas_num = [40]
-    #atlas_num = [1, 5] + range(10, 201, 10)
+    #atlas_num = [201]
+    atlas_num = [1, 5] + range(10, 201, 10)
     #atlas_num = range(1, 10)
     #atlas_num = range(1, 201)
 

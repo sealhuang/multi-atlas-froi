@@ -23,7 +23,7 @@ sessid = [line.strip() for line in sessid]
 # load zstat and label file
 zstat_file = os.path.join(data_dir, 'merged_zstat.nii.gz')
 label_file = os.path.join(data_dir, 'merged_true_label.nii.gz')
-mask_file = os.path.join(base_dir, 'ma_202', 'r_fc', 'mask.nii.gz')
+mask_file = os.path.join(base_dir, 'ma_202', 'l_fc', 'mask.nii.gz')
 zstat_data = nib.load(zstat_file).get_data()
 label_data = nib.load(label_file).get_data()
 mask_data = nib.load(mask_file).get_data()
@@ -35,7 +35,7 @@ mask_vtr = mask_vtr > 0
 
 #selected_num = [1, 5] + range(10, 201, 10)
 selected_num = [40, 201]
-cls_list = [1, 3]
+cls_list = [2, 4]
 thres = 0.2
 
 ofa_dice = []
@@ -104,7 +104,7 @@ for i in range(len(sessid)):
             T = test_label == label_idx
             dice_val = mymath.dice_coef(T, P)
             print 'Dice for label %s: %f'%(label_idx, dice_val)
-            if label_idx == 3:
+            if label_idx == 4:
                 temp_ffa_dice.append(dice_val)
             else:
                 temp_ofa_dice.append(dice_val)
@@ -124,7 +124,7 @@ for i in range(len(sessid)):
                 c = 0
             else:
                 c = 1
-            if label_idx == 3:
+            if label_idx == 4:
                 temp_ffa_peak.append(c)
             else:
                 temp_ofa_peak.append(c)
@@ -140,7 +140,7 @@ for i in range(len(sessid)):
     ffa_peak.append(temp_ffa_peak)
     ofa_peak.append(temp_ofa_peak)
 
-out_file = 'r_ffa_dice_output.txt'
+out_file = 'l_ffa_dice_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
@@ -150,7 +150,7 @@ for line in ffa_dice:
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
 
-out_file = 'r_ofa_dice_output.txt'
+out_file = 'l_ofa_dice_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
@@ -160,7 +160,7 @@ for line in ofa_dice:
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
 
-out_file = 'r_ffa_peak_output.txt'
+out_file = 'l_ffa_peak_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
@@ -170,7 +170,7 @@ for line in ffa_peak:
     tmp_line = ','.join(tmp_line)
     f.write(tmp_line + '\n')
 
-out_file = 'r_ofa_peak_output.txt'
+out_file = 'l_ofa_peak_output.txt'
 f = open(out_file, 'w')
 str_line = [str(item) for item in selected_num]
 str_line = ','.join(str_line)
